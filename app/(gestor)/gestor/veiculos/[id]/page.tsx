@@ -34,7 +34,7 @@ export default async function VeiculoDetailPage({ params }: { params: { id: stri
     supabase.from('contratos').select('id').eq('veiculo_id', params.id),
     supabase.from('pagamentos').select('contrato_id, valor, status, data_vencimento'),
     supabase.from('despesas').select('valor, data').eq('veiculo_id', params.id),
-    supabase.from('documentos').select('*').eq('tipo', 'veiculo').eq('veiculo_id', params.id).order('created_at', { ascending: false }),
+    supabase.from('documentos').select('*').eq('veiculo_id', params.id).order('created_at', { ascending: false }),
   ])
 
   const motoristasVinculados = new Set(contratosAtivos?.map(c => c.motorista_id))
@@ -46,7 +46,7 @@ export default async function VeiculoDetailPage({ params }: { params: { id: stri
   const motoristaId = motorista?.id ?? null
 
   const { data: docMotorista } = motoristaId
-    ? await supabase.from('documentos').select('*').eq('tipo', 'motorista').eq('motorista_id', motoristaId).order('created_at', { ascending: false })
+    ? await supabase.from('documentos').select('*').eq('motorista_id', motoristaId).order('created_at', { ascending: false })
     : { data: [] }
 
   // ── Cálculo de payback ─────────────────────────────────────
