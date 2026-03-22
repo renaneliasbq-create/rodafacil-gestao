@@ -1,10 +1,11 @@
 export const dynamic = 'force-dynamic'
 
 import { createClient } from '@/lib/supabase/server'
-import { User, Lock, Users, ShieldCheck } from 'lucide-react'
+import { User, Lock, ShieldCheck } from 'lucide-react'
 import { PerfilForm } from './perfil-form'
 import { SenhaForm } from './senha-form'
 import { GestoresSection } from './gestores-section'
+import { AvatarUpload } from './avatar-upload'
 import { formatDate } from '@/lib/utils'
 
 export default async function ConfiguracoesPage() {
@@ -15,7 +16,7 @@ export default async function ConfiguracoesPage() {
     { data: gestores },
   ] = await Promise.all([
     supabase.auth.getUser(),
-    supabase.from('users').select('id, nome, email, telefone, created_at').eq('tipo', 'gestor').order('created_at'),
+    supabase.from('users').select('id, nome, email, telefone, foto_url, created_at').eq('tipo', 'gestor').order('created_at'),
   ])
 
   const perfil = gestores?.find(g => g.id === user?.id)
@@ -34,17 +35,19 @@ export default async function ConfiguracoesPage() {
           <h2 className="font-semibold text-gray-900">Meu perfil</h2>
         </div>
 
-        {/* Avatar + email (somente leitura) */}
-        <div className="flex items-center gap-4 mb-5">
-          <div className="w-14 h-14 rounded-full bg-blue-100 flex items-center justify-center shrink-0">
-            <span className="text-xl font-bold text-blue-700">
-              {perfil?.nome?.charAt(0).toUpperCase() ?? '?'}
-            </span>
-          </div>
-          <div>
+        {/* Avatar + info */}
+        <div className="flex items-start gap-4 mb-6">
+          <AvatarUpload
+            userId={user?.id ?? ''}
+            nome={perfil?.nome ?? '?'}
+            fotoUrl={perfil?.foto_url ?? null}
+          />
+          <div className="pt-1">
             <p className="text-sm font-semibold text-gray-900">{perfil?.nome ?? '—'}</p>
-            <p className="text-xs text-gray-400">{user?.email}</p>
-            <p className="text-xs text-gray-300 mt-0.5">Desde {perfil?.created_at ? formatDate(perfil.created_at) : '—'}</p>
+            <p className="text-xs text-gray-400 mt-0.5">{user?.email}</p>
+            <p className="text-xs text-gray-300 mt-0.5">
+              Desde {perfil?.created_at ? formatDate(perfil.created_at) : '—'}
+            </p>
           </div>
         </div>
 
@@ -65,7 +68,9 @@ export default async function ConfiguracoesPage() {
         <div className="flex items-center gap-2 mb-2 pb-4 border-b border-gray-100">
           <ShieldCheck className="w-4 h-4 text-blue-500" />
           <h2 className="font-semibold text-gray-900">Usuários com acesso</h2>
-          <span className="ml-auto text-xs text-gray-400">{gestores?.length ?? 0} gestor{(gestores?.length ?? 0) !== 1 ? 'es' : ''}</span>
+          <span className="ml-auto text-xs text-gray-400">
+            {gestores?.length ?? 0} gestor{(gestores?.length ?? 0) !== 1 ? 'es' : ''}
+          </span>
         </div>
         <div className="pt-2">
           <GestoresSection gestores={gestores ?? []} currentUserId={user?.id ?? ''} />

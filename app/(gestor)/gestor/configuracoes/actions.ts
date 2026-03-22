@@ -62,6 +62,22 @@ export async function criarGestor(_prev: FormState, formData: FormData): Promise
   return { success: `Acesso criado para ${nome}!` }
 }
 
+// ── Salvar URL do avatar ───────────────────────────────────────
+export async function salvarAvatar(url: string): Promise<{ error?: string }> {
+  const supabase = createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { error: 'Sessão expirada.' }
+
+  const { error } = await supabase
+    .from('users')
+    .update({ foto_url: url, updated_at: new Date().toISOString() })
+    .eq('id', user.id)
+
+  if (error) return { error: 'Erro ao salvar foto.' }
+  revalidatePath('/gestor/configuracoes')
+  return {}
+}
+
 // ── Remover acesso de gestor ───────────────────────────────────
 export async function removerGestor(gestorId: string): Promise<{ error?: string }> {
   const supabase = createClient()
