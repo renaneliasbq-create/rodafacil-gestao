@@ -53,7 +53,7 @@ export default async function RecebiveisPage({ searchParams }: { searchParams: {
             <TrendingUp className="w-4 h-4 text-emerald-500" />
             <p className="text-xs text-gray-500 font-medium uppercase tracking-wide">Total recebido</p>
           </div>
-          <p className="text-2xl font-bold text-emerald-600">{formatCurrency(totalRecebido)}</p>
+          <p className="text-base md:text-2xl font-bold text-emerald-600 truncate">{formatCurrency(totalRecebido)}</p>
           <p className="text-xs text-gray-400 mt-1">{pctEfetivacao.toFixed(0)}% de efetivação</p>
         </div>
 
@@ -62,7 +62,7 @@ export default async function RecebiveisPage({ searchParams }: { searchParams: {
             <TrendingDown className="w-4 h-4 text-red-500" />
             <p className="text-xs text-gray-500 font-medium uppercase tracking-wide">Total retirado</p>
           </div>
-          <p className="text-2xl font-bold text-red-600">{formatCurrency(totalSaques)}</p>
+          <p className="text-base md:text-2xl font-bold text-red-600 truncate">{formatCurrency(totalSaques)}</p>
           <p className="text-xs text-gray-400 mt-1">{pctRetirado.toFixed(0)}% do recebido</p>
         </div>
 
@@ -71,7 +71,7 @@ export default async function RecebiveisPage({ searchParams }: { searchParams: {
             <Wallet className="w-4 h-4 text-blue-500" />
             <p className="text-xs text-gray-500 font-medium uppercase tracking-wide">Saldo disponível</p>
           </div>
-          <p className={`text-2xl font-bold ${saldo >= 0 ? 'text-blue-600' : 'text-red-600'}`}>{formatCurrency(saldo)}</p>
+          <p className={`text-base md:text-2xl font-bold truncate ${saldo >= 0 ? 'text-blue-600' : 'text-red-600'}`}>{formatCurrency(saldo)}</p>
           <p className="text-xs text-gray-400 mt-1">{saldo >= 0 ? 'Positivo' : 'Negativo'}</p>
         </div>
 
@@ -80,7 +80,7 @@ export default async function RecebiveisPage({ searchParams }: { searchParams: {
             <ArrowDownCircle className="w-4 h-4 text-yellow-500" />
             <p className="text-xs text-gray-500 font-medium uppercase tracking-wide">A receber</p>
           </div>
-          <p className="text-2xl font-bold text-yellow-600">{formatCurrency(totalPendente + totalAtrasado)}</p>
+          <p className="text-base md:text-2xl font-bold text-yellow-600 truncate">{formatCurrency(totalPendente + totalAtrasado)}</p>
           <p className="text-xs text-gray-400 mt-1">{formatCurrency(totalAtrasado)} em atraso</p>
         </div>
       </div>
