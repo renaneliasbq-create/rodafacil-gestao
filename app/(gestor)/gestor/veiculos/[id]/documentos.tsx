@@ -2,8 +2,7 @@
 
 import { useRef, useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
-import { createClient } from '@/lib/supabase/client'
-import { prepararUpload, salvarDocumento, deletarDocumento } from '../actions'
+import { deletarDocumento } from '../actions'
 import { FileText, Loader2, Paperclip, Trash2, Upload } from 'lucide-react'
 
 interface Documento {
@@ -35,26 +34,15 @@ export function DocumentosSection({ entidade, refId, documentos, label = 'Docume
     setUploading(true)
 
     try {
-      // 1. Gera URL assinada pelo servidor (não depende de auth no browser)
-      const prepared = await prepararUpload(entidade, refId, file.name)
-      if ('error' in prepared) throw new Error(prepared.error)
+      const fd = new FormData()
+      fd.append('file', file)
+      fd.append('entidade', entidade)
+      fd.append('refId', refId)
 
-      // 2. Faz upload direto para a URL assinada via fetch
-      const uploadRes = await fetch(prepared.signedUrl, {
-        method: 'PUT',
-        body: file,
-        headers: { 'Content-Type': file.type || 'application/octet-stream' },
-      })
-      if (!uploadRes.ok) throw new Error(`Erro no upload: ${uploadRes.status}`)
+      const res = await fetch('/api/upload', { method: 'POST', body: fd })
+      const json = await res.json()
 
-      // 3. Monta URL pública e salva no banco
-      const supabase = createClient()
-      const { data: { publicUrl } } = supabase.storage
-        .from('documentos')
-        .getPublicUrl(prepared.path)
-
-      const result = await salvarDocumento(entidade, refId, file.name, prepared.path, publicUrl)
-      if (result?.error) throw new Error(result.error)
+      if (!res.ok || json.error) throw new Error(json.error ?? 'Erro ao enviar arquivo')
 
       router.refresh()
     } catch (err: unknown) {
