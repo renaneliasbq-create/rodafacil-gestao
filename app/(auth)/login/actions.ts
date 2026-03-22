@@ -35,7 +35,10 @@ export async function signIn(
   })
 
   if (error) {
-    return { error: error.message }
+    if (error.message.includes('Invalid login credentials')) {
+      return { error: 'E-mail ou senha incorretos.' }
+    }
+    return { error: 'Erro ao fazer login. Tente novamente.' }
   }
 
   // Busca o tipo do usuário para redirecionar ao dashboard correto
