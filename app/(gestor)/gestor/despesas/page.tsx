@@ -32,13 +32,18 @@ export default async function DespesasPage({ searchParams }: { searchParams: Rec
 
   const [
     { data: despesas },
+    { data: todasDespesasTotais },
     { data: veiculos },
     { data: motoristas },
   ] = await Promise.all([
+    // Lista para exibição — limitada a 50 registros
     supabase.from('despesas')
       .select('id, categoria, valor, data, descricao, created_at, veiculo_id, motorista_id')
       .order('data', { ascending: false })
       .limit(50),
+    // Todas as despesas para cálculo de totais — sem limite
+    supabase.from('despesas')
+      .select('valor, categoria, veiculo_id'),
     supabase.from('veiculos').select('id, placa, modelo').order('placa'),
     supabase.from('users').select('id, nome').eq('tipo', 'motorista').order('nome'),
   ])
@@ -47,28 +52,32 @@ export default async function DespesasPage({ searchParams }: { searchParams: Rec
   const veiculoById = Object.fromEntries((veiculos ?? []).map(v => [v.id, v]))
   const motoristaById = Object.fromEntries((motoristas ?? []).map(m => [m.id, m]))
 
-  // Lista filtrada (usada em totais e categorias)
-  const despesasFiltradas = selectedVeiculo
-    ? (despesas ?? []).filter(d => d.veiculo_id === selectedVeiculo)
-    : (despesas ?? [])
+  // Totais calculados sobre TODAS as despesas (sem limite de 50)
+  const todasParaTotais = selectedVeiculo
+    ? (todasDespesasTotais ?? []).filter(d => d.veiculo_id === selectedVeiculo)
+    : (todasDespesasTotais ?? [])
 
-  // Totais por categoria (baseados no filtro ativo)
-  const totalGeral = despesasFiltradas.reduce((s, d) => s + d.valor, 0)
-  const porCategoria: Record<string, number> = despesasFiltradas.reduce((acc, d) => {
+  const totalGeral = todasParaTotais.reduce((s, d) => s + d.valor, 0)
+  const porCategoria: Record<string, number> = todasParaTotais.reduce((acc, d) => {
     acc[d.categoria] = (acc[d.categoria] ?? 0) + d.valor
     return acc
   }, {} as Record<string, number>)
 
-  // Totais por veículo
+  // Lista filtrada por veículo (somente os 50 para exibição)
+  const despesasFiltradas = selectedVeiculo
+    ? (despesas ?? []).filter(d => d.veiculo_id === selectedVeiculo)
+    : (despesas ?? [])
+
+  // Totais por veículo — usa todas as despesas para valores corretos
   const porVeiculo: Record<string, { placa: string; modelo: string; total: number }> = {}
-  for (const d of (despesas ?? [])) {
+  for (const d of (todasDespesasTotais ?? [])) {
     if (!d.veiculo_id) continue
     const v = veiculoById[d.veiculo_id]
     if (!v) continue
     if (!porVeiculo[d.veiculo_id]) porVeiculo[d.veiculo_id] = { placa: v.placa, modelo: v.modelo, total: 0 }
     porVeiculo[d.veiculo_id].total += d.valor
   }
-  const despesasSemVeiculo = (despesas ?? []).filter(d => !d.veiculo_id).reduce((s, d) => s + d.valor, 0)
+  const despesasSemVeiculo = (todasDespesasTotais ?? []).filter(d => !d.veiculo_id).reduce((s, d) => s + d.valor, 0)
 
   return (
     <div className="p-4 lg:p-8 space-y-4 lg:space-y-6">

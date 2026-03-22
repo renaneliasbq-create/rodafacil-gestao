@@ -14,15 +14,20 @@ export default async function ReceitasPage({ searchParams }: { searchParams: { o
 
   const [
     { data: pagamentos },
+    { data: todosPagamentosTotais },
     { data: motoristas },
     { data: contratos },
     { data: todosContratos },
     { data: veiculos },
   ] = await Promise.all([
+    // Lista para exibição — limitada a 50 registros
     supabase.from('pagamentos')
       .select('*, motorista:users(nome)')
       .order('data_vencimento', { ascending: false })
       .limit(50),
+    // Todos os pagamentos para cálculo de totais — sem limite
+    supabase.from('pagamentos')
+      .select('valor, status, contrato_id'),
     supabase.from('users').select('id, nome').eq('tipo', 'motorista').order('nome'),
     supabase.from('contratos').select('id, motorista_id, valor_aluguel').eq('status', 'ativo'),
     supabase.from('contratos').select('id, veiculo_id'),
@@ -33,19 +38,24 @@ export default async function ReceitasPage({ searchParams }: { searchParams: { o
   const contratoPorId = Object.fromEntries((todosContratos ?? []).map(c => [c.id, c]))
   const veiculoPorId = Object.fromEntries((veiculos ?? []).map(v => [v.id, v]))
 
-  // Lista filtrada por veículo (usada nos totais e na lista)
+  // Totais calculados sobre TODOS os pagamentos (sem limite de 50)
+  const todosParaTotais = selectedVeiculo
+    ? (todosPagamentosTotais ?? []).filter(p => contratoPorId[p.contrato_id]?.veiculo_id === selectedVeiculo)
+    : (todosPagamentosTotais ?? [])
+
+  const totalPago = todosParaTotais.filter(p => p.status === 'pago').reduce((s, p) => s + p.valor, 0)
+  const totalPendente = todosParaTotais.filter(p => p.status === 'pendente').reduce((s, p) => s + p.valor, 0)
+  const totalAtrasado = todosParaTotais.filter(p => p.status === 'atrasado').reduce((s, p) => s + p.valor, 0)
+  const totalGeral = totalPago + totalPendente + totalAtrasado
+
+  // Lista filtrada por veículo (somente os 50 para exibição)
   const pagamentosFiltrados = selectedVeiculo
     ? (pagamentos ?? []).filter(p => contratoPorId[p.contrato_id]?.veiculo_id === selectedVeiculo)
     : (pagamentos ?? [])
 
-  const totalPago = pagamentosFiltrados.filter(p => p.status === 'pago').reduce((s, p) => s + p.valor, 0)
-  const totalPendente = pagamentosFiltrados.filter(p => p.status === 'pendente').reduce((s, p) => s + p.valor, 0)
-  const totalAtrasado = pagamentosFiltrados.filter(p => p.status === 'atrasado').reduce((s, p) => s + p.valor, 0)
-  const totalGeral = totalPago + totalPendente + totalAtrasado
-
-  // Receita por veículo (sempre todos, para navegação)
+  // Receita por veículo — usa todos os pagamentos para totais corretos
   const porVeiculo: Record<string, { placa: string; modelo: string; pago: number; pendente: number; atrasado: number }> = {}
-  for (const p of (pagamentos ?? [])) {
+  for (const p of (todosPagamentosTotais ?? [])) {
     const contrato = contratoPorId[p.contrato_id]
     if (!contrato?.veiculo_id) continue
     const veiculo = veiculoPorId[contrato.veiculo_id]

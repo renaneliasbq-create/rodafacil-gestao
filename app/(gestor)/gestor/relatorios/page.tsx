@@ -54,6 +54,7 @@ export default async function RelatoriosPage({ searchParams }: { searchParams: R
     { data: veiculos },
     { data: contratos },
     { data: todasDespesas },
+    { data: todosPagamentosPayback },
   ] = await Promise.all([
     supabase.from('pagamentos')
       .select('*, motorista:users(nome)')
@@ -73,7 +74,10 @@ export default async function RelatoriosPage({ searchParams }: { searchParams: R
     supabase.from('users').select('id, nome, email, telefone, cpf, cnh, created_at').eq('tipo', 'motorista').order('nome'),
     supabase.from('veiculos').select('*').order('placa'),
     supabase.from('contratos').select('id, veiculo_id'),
+    // all-time — para bônus e payback
     supabase.from('despesas').select('veiculo_id, valor, descricao'),
+    // all-time pagamentos pagos — para payback por veículo (acumulado desde o início)
+    supabase.from('pagamentos').select('valor, status, contrato_id').eq('status', 'pago'),
   ])
 
   // Generate months in the selected period
@@ -109,13 +113,13 @@ export default async function RelatoriosPage({ searchParams }: { searchParams: R
     const retirada = retiradas
       ?.filter(r => r.data >= ini_ && r.data <= fim_)
       .reduce((s, r) => s + r.valor, 0) ?? 0
-    return { mes: label, receita, despesa, retirada, lucro: receita - despesa - retirada }
+    return { mes: label, receita, despesa, retirada, lucro: receita - despesa }
   }).reverse()
 
   const totalReceita  = resumoMensal.reduce((s, r) => s + r.receita, 0)
   const totalDespesa  = resumoMensal.reduce((s, r) => s + r.despesa, 0)
   const totalRetirada = resumoMensal.reduce((s, r) => s + r.retirada, 0)
-  const totalLucro    = totalReceita - totalDespesa - totalRetirada
+  const totalLucro    = totalReceita - totalDespesa
 
   // Resumo de bônus (acumulado desde o início, não filtrado por ano)
   const bonusCombustivel = (todasDespesas ?? [])
@@ -126,14 +130,13 @@ export default async function RelatoriosPage({ searchParams }: { searchParams: R
     .reduce((s, d) => s + d.valor, 0)
   const totalBonus = bonusCombustivel + bonusNatal
 
-  // Payback por veículo
-  const todosPagamentos = pagamentos ?? []
+  // Payback por veículo — usa dados all-time (independente do filtro de período)
   const paybackPorVeiculo = (veiculos ?? [])
     .filter(v => v.valor_compra != null && v.valor_compra > 0)
     .map(v => {
       const contratosIds = new Set((contratos ?? []).filter(c => c.veiculo_id === v.id).map(c => c.id))
-      const receita = todosPagamentos
-        .filter(p => p.status === 'pago' && contratosIds.has(p.contrato_id))
+      const receita = (todosPagamentosPayback ?? [])
+        .filter(p => contratosIds.has(p.contrato_id))
         .reduce((s, p) => s + p.valor, 0)
       const despesa = (todasDespesas ?? [])
         .filter(d => d.veiculo_id === v.id)
