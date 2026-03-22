@@ -37,7 +37,7 @@ export default async function DespesasPage({ searchParams }: { searchParams: Rec
   ] = await Promise.all([
     supabase.from('despesas')
       .select('id, categoria, valor, data, descricao, created_at, veiculo_id, motorista_id')
-      .order('created_at', { ascending: false })
+      .order('data', { ascending: false })
       .limit(50),
     supabase.from('veiculos').select('id, placa, modelo').order('placa'),
     supabase.from('users').select('id, nome').eq('tipo', 'motorista').order('nome'),

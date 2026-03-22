@@ -21,7 +21,7 @@ export default async function ReceitasPage({ searchParams }: { searchParams: { o
   ] = await Promise.all([
     supabase.from('pagamentos')
       .select('*, motorista:users(nome)')
-      .order('data_vencimento', { ascending: true })
+      .order('data_vencimento', { ascending: false })
       .limit(50),
     supabase.from('users').select('id, nome').eq('tipo', 'motorista').order('nome'),
     supabase.from('contratos').select('id, motorista_id, valor_aluguel').eq('status', 'ativo'),

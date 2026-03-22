@@ -53,7 +53,7 @@ export default async function EmpresaPage() {
     .is('veiculo_id', null)
     .is('motorista_id', null)
     .like('descricao', '[CNPJ]%')
-    .order('created_at', { ascending: false })
+    .order('data', { ascending: false })
 
   const totalGeral = (gastos ?? []).reduce((s, g) => s + g.valor, 0)
 
