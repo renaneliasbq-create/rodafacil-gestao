@@ -63,19 +63,19 @@ export function AcoesReceita({ pagamento }: { pagamento: Pagamento }) {
       </div>
 
       {editOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-          <div className="bg-white rounded-2xl shadow-xl w-full max-w-sm p-6 m-4">
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/40">
+          <div className="bg-white rounded-t-2xl sm:rounded-2xl shadow-xl w-full sm:max-w-sm p-5 sm:p-6 sm:m-4">
             <div className="flex items-center justify-between mb-5">
               <h2 className="text-lg font-bold text-gray-900">Editar lançamento</h2>
-              <button type="button" onClick={() => setEditOpen(false)} className="p-1.5 hover:bg-gray-100 rounded-lg">
-                <X className="w-4 h-4 text-gray-500" />
+              <button type="button" onClick={() => setEditOpen(false)} className="w-11 h-11 flex items-center justify-center hover:bg-gray-100 rounded-xl">
+                <X className="w-5 h-5 text-gray-500" />
               </button>
             </div>
 
             <form onSubmit={handleEdit} className="space-y-4">
               {erro && <p className="text-sm text-red-600 bg-red-50 px-3 py-2 rounded-lg">{erro}</p>}
 
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">Valor *</label>
                   <input name="valor" type="number" step="0.01" min="0" required className="input" defaultValue={pagamento.valor} />
@@ -100,9 +100,9 @@ export function AcoesReceita({ pagamento }: { pagamento: Pagamento }) {
                 </select>
               </div>
 
-              <div className="flex gap-3 pt-2">
-                <button type="button" onClick={() => setEditOpen(false)} className="btn-secondary flex-1">Cancelar</button>
-                <button type="submit" disabled={isPending} className="btn-primary flex-1">
+              <div className="flex gap-3 pt-2 pb-2">
+                <button type="button" onClick={() => setEditOpen(false)} className="btn-secondary flex-1 min-h-[44px]">Cancelar</button>
+                <button type="submit" disabled={isPending} className="btn-primary flex-1 min-h-[44px]">
                   {isPending ? <><Loader2 className="w-4 h-4 animate-spin" />Salvando...</> : 'Salvar'}
                 </button>
               </div>

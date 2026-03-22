@@ -179,7 +179,7 @@ export default async function GestorDashboardPage({
   )
 
   return (
-    <div className="p-6 lg:p-8 space-y-6">
+    <div className="p-4 lg:p-8 space-y-4 lg:space-y-6">
       {/* Header com seletor */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
@@ -192,33 +192,33 @@ export default async function GestorDashboardPage({
       </div>
 
       {/* KPI Cards */}
-      <div className="grid grid-cols-2 xl:grid-cols-4 gap-4">
-        <div className="card p-5">
-          <div className="flex items-start justify-between">
-            <div>
+      <div className="grid grid-cols-2 xl:grid-cols-4 gap-3 lg:gap-4">
+        <div className="card p-4">
+          <div className="flex items-start justify-between gap-2">
+            <div className="min-w-0 flex-1">
               <p className="text-xs text-gray-500 font-medium uppercase tracking-wide">Receita</p>
-              <p className="text-2xl font-bold text-gray-900 mt-1">{formatCurrency(receitaPeriodo)}</p>
+              <p className="text-lg lg:text-2xl font-bold text-gray-900 mt-1 truncate">{formatCurrency(receitaPeriodo)}</p>
             </div>
             <div className="w-9 h-9 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
               <TrendingUp className="w-4 h-4 text-blue-700" />
             </div>
           </div>
-          <div className="flex items-center gap-1 mt-3">
+          <div className="flex items-center gap-1 mt-3 flex-wrap">
             {variacaoReceita >= 0
-              ? <ArrowUpRight className="w-3.5 h-3.5 text-emerald-500" />
-              : <ArrowDownRight className="w-3.5 h-3.5 text-red-500" />}
+              ? <ArrowUpRight className="w-3.5 h-3.5 text-emerald-500 flex-shrink-0" />
+              : <ArrowDownRight className="w-3.5 h-3.5 text-red-500 flex-shrink-0" />}
             <span className={`text-xs font-semibold ${variacaoReceita >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>
               {Math.abs(variacaoReceita).toFixed(1)}%
             </span>
-            <span className="text-xs text-gray-400">vs período anterior</span>
+            <span className="text-xs text-gray-400 hidden sm:inline">vs período anterior</span>
           </div>
         </div>
 
-        <div className="card p-5">
-          <div className="flex items-start justify-between">
-            <div>
-              <p className="text-xs text-gray-500 font-medium uppercase tracking-wide">Motoristas ativos</p>
-              <p className="text-2xl font-bold text-gray-900 mt-1">{motoristasAtivos}</p>
+        <div className="card p-4">
+          <div className="flex items-start justify-between gap-2">
+            <div className="min-w-0 flex-1">
+              <p className="text-xs text-gray-500 font-medium uppercase tracking-wide">Motoristas</p>
+              <p className="text-lg lg:text-2xl font-bold text-gray-900 mt-1">{motoristasAtivos}</p>
             </div>
             <div className="w-9 h-9 bg-emerald-100 rounded-lg flex items-center justify-center flex-shrink-0">
               <Users className="w-4 h-4 text-emerald-700" />
@@ -227,11 +227,11 @@ export default async function GestorDashboardPage({
           <p className="text-xs text-gray-400 mt-3">com contrato ativo</p>
         </div>
 
-        <div className="card p-5">
-          <div className="flex items-start justify-between">
-            <div>
+        <div className="card p-4">
+          <div className="flex items-start justify-between gap-2">
+            <div className="min-w-0 flex-1">
               <p className="text-xs text-gray-500 font-medium uppercase tracking-wide">Frota</p>
-              <p className="text-2xl font-bold text-gray-900 mt-1">{totalVeiculos}</p>
+              <p className="text-lg lg:text-2xl font-bold text-gray-900 mt-1">{totalVeiculos}</p>
             </div>
             <div className="w-9 h-9 bg-purple-100 rounded-lg flex items-center justify-center flex-shrink-0">
               <Car className="w-4 h-4 text-purple-700" />
@@ -245,11 +245,11 @@ export default async function GestorDashboardPage({
           </div>
         </div>
 
-        <div className="card p-5">
-          <div className="flex items-start justify-between">
-            <div>
+        <div className="card p-4">
+          <div className="flex items-start justify-between gap-2">
+            <div className="min-w-0 flex-1">
               <p className="text-xs text-gray-500 font-medium uppercase tracking-wide">Inadimplência</p>
-              <p className={`text-2xl font-bold mt-1 ${inadimplenciaValor > 0 ? 'text-red-600' : 'text-gray-900'}`}>
+              <p className={`text-lg lg:text-2xl font-bold mt-1 truncate ${inadimplenciaValor > 0 ? 'text-red-600' : 'text-gray-900'}`}>
                 {formatCurrency(inadimplenciaValor)}
               </p>
             </div>
@@ -257,7 +257,7 @@ export default async function GestorDashboardPage({
               <AlertCircle className={`w-4 h-4 ${inadimplenciaValor > 0 ? 'text-red-600' : 'text-gray-400'}`} />
             </div>
           </div>
-          <p className="text-xs text-gray-400 mt-3">{inadimplenciaQtd} pagamento{inadimplenciaQtd !== 1 ? 's' : ''} em atraso</p>
+          <p className="text-xs text-gray-400 mt-3">{inadimplenciaQtd} pag. em atraso</p>
         </div>
       </div>
 
@@ -332,17 +332,29 @@ export default async function GestorDashboardPage({
               {ultimosPagamentos.map((p) => {
                 const motorista = (Array.isArray(p.motorista) ? p.motorista[0] : p.motorista) as { nome: string } | null
                 return (
-                  <div key={p.id} className="grid grid-cols-4 gap-4 items-center px-5 py-3">
-                    <div className="col-span-2">
-                      <p className="text-sm font-medium text-gray-900">{motorista?.nome ?? '—'}</p>
-                      <p className="text-xs text-gray-400">Venc. {formatDate(p.data_vencimento)}</p>
+                  <div key={p.id}>
+                    {/* Mobile */}
+                    <div className="sm:hidden flex items-center justify-between px-4 py-3">
+                      <div>
+                        <p className="text-sm font-medium text-gray-900">{motorista?.nome ?? '—'}</p>
+                        <p className="text-xs text-gray-400">Venc. {formatDate(p.data_vencimento)}</p>
+                      </div>
+                      <div className="flex flex-col items-end gap-1">
+                        <span className={`badge ${STATUS_COLORS[p.status as keyof typeof STATUS_COLORS]}`}>{STATUS_LABELS[p.status]}</span>
+                        <p className="text-sm font-semibold text-gray-900">{formatCurrency(p.valor)}</p>
+                      </div>
                     </div>
-                    <div>
-                      <span className={`badge ${STATUS_COLORS[p.status as keyof typeof STATUS_COLORS]}`}>
-                        {STATUS_LABELS[p.status]}
-                      </span>
+                    {/* Desktop */}
+                    <div className="hidden sm:grid grid-cols-4 gap-4 items-center px-5 py-3">
+                      <div className="col-span-2">
+                        <p className="text-sm font-medium text-gray-900">{motorista?.nome ?? '—'}</p>
+                        <p className="text-xs text-gray-400">Venc. {formatDate(p.data_vencimento)}</p>
+                      </div>
+                      <div>
+                        <span className={`badge ${STATUS_COLORS[p.status as keyof typeof STATUS_COLORS]}`}>{STATUS_LABELS[p.status]}</span>
+                      </div>
+                      <p className="text-sm font-semibold text-gray-900 text-right">{formatCurrency(p.valor)}</p>
                     </div>
-                    <p className="text-sm font-semibold text-gray-900 text-right">{formatCurrency(p.valor)}</p>
                   </div>
                 )
               })}

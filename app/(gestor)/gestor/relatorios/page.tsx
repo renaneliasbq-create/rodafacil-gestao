@@ -162,7 +162,7 @@ export default async function RelatoriosPage({ searchParams }: { searchParams: R
   }).filter(m => m.recebido > 0 || m.retirado > 0)
 
   return (
-    <div className="p-6 lg:p-8 space-y-6">
+    <div className="p-4 lg:p-8 space-y-4 lg:space-y-6">
       <div className="flex items-center justify-between flex-wrap gap-4">
         <div>
           <h1 className="text-2xl font-extrabold text-gray-900">Relatórios</h1>
@@ -273,18 +273,33 @@ export default async function RelatoriosPage({ searchParams }: { searchParams: R
         </div>
         <div className="divide-y divide-gray-50">
           {resumoMensal.map((r) => (
-            <div key={r.mes} className="grid grid-cols-5 gap-4 items-center px-5 py-3">
-              <span className="text-sm font-medium text-gray-900">{r.mes}</span>
-              <span className="text-sm text-emerald-600 font-semibold text-right">{formatCurrency(r.receita)}</span>
-              <span className="text-sm text-purple-600 font-semibold text-right">{formatCurrency(r.retirada)}</span>
-              <span className="text-sm text-red-500 font-semibold text-right">{formatCurrency(r.despesa)}</span>
-              <span className={`text-sm font-bold text-right ${r.lucro >= 0 ? 'text-gray-900' : 'text-red-600'}`}>
-                {formatCurrency(r.lucro)}
-              </span>
+            <div key={r.mes}>
+              {/* Mobile */}
+              <div className="sm:hidden px-4 py-3.5">
+                <div className="flex items-center justify-between mb-1.5">
+                  <span className="text-sm font-semibold text-gray-900">{r.mes}</span>
+                  <span className={`text-sm font-bold ${r.lucro >= 0 ? 'text-gray-900' : 'text-red-600'}`}>{formatCurrency(r.lucro)}</span>
+                </div>
+                <div className="flex gap-3 text-xs text-gray-500">
+                  <span>Rec: <span className="text-emerald-600 font-medium">{formatCurrency(r.receita)}</span></span>
+                  <span>Ret: <span className="text-purple-600 font-medium">{formatCurrency(r.retirada)}</span></span>
+                  <span>Desp: <span className="text-red-500 font-medium">{formatCurrency(r.despesa)}</span></span>
+                </div>
+              </div>
+              {/* Desktop */}
+              <div className="hidden sm:grid grid-cols-5 gap-4 items-center px-5 py-3">
+                <span className="text-sm font-medium text-gray-900">{r.mes}</span>
+                <span className="text-sm text-emerald-600 font-semibold text-right">{formatCurrency(r.receita)}</span>
+                <span className="text-sm text-purple-600 font-semibold text-right">{formatCurrency(r.retirada)}</span>
+                <span className="text-sm text-red-500 font-semibold text-right">{formatCurrency(r.despesa)}</span>
+                <span className={`text-sm font-bold text-right ${r.lucro >= 0 ? 'text-gray-900' : 'text-red-600'}`}>
+                  {formatCurrency(r.lucro)}
+                </span>
+              </div>
             </div>
           ))}
         </div>
-        <div className="grid grid-cols-5 gap-4 items-center px-5 py-3.5 bg-gray-50 border-t border-gray-200">
+        <div className="hidden sm:grid grid-cols-5 gap-4 items-center px-5 py-3.5 bg-gray-50 border-t border-gray-200">
           <span className="text-sm font-bold text-gray-900">Total</span>
           <span className="text-sm font-bold text-emerald-600 text-right">{formatCurrency(totalReceita)}</span>
           <span className="text-sm font-bold text-purple-600 text-right">{formatCurrency(totalRetirada)}</span>
@@ -292,6 +307,10 @@ export default async function RelatoriosPage({ searchParams }: { searchParams: R
           <span className={`text-sm font-bold text-right ${totalLucro >= 0 ? 'text-blue-700' : 'text-red-600'}`}>
             {formatCurrency(totalLucro)}
           </span>
+        </div>
+        <div className="sm:hidden flex items-center justify-between px-4 py-3.5 bg-gray-50 border-t border-gray-200">
+          <span className="text-sm font-bold text-gray-900">Total</span>
+          <span className={`text-sm font-bold ${totalLucro >= 0 ? 'text-blue-700' : 'text-red-600'}`}>{formatCurrency(totalLucro)}</span>
         </div>
       </div>
 
@@ -309,13 +328,27 @@ export default async function RelatoriosPage({ searchParams }: { searchParams: R
           </div>
           <div className="divide-y divide-gray-50">
             {resumoPorMotorista.map((m) => (
-              <div key={m.nome} className="grid grid-cols-5 gap-4 items-center px-5 py-3">
-                <span className="text-sm font-medium text-gray-900 col-span-2">{m.nome}</span>
-                <span className="text-sm text-emerald-600 font-semibold text-right">{formatCurrency(m.recebido)}</span>
-                <span className="text-sm text-purple-600 font-semibold text-right">{formatCurrency(m.retirado)}</span>
-                <span className={`text-sm font-bold text-right ${m.saldo >= 0 ? 'text-gray-900' : 'text-red-600'}`}>
-                  {formatCurrency(m.saldo)}
-                </span>
+              <div key={m.nome}>
+                {/* Mobile */}
+                <div className="sm:hidden px-4 py-3.5">
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="text-sm font-semibold text-gray-900">{m.nome}</span>
+                    <span className={`text-sm font-bold ${m.saldo >= 0 ? 'text-gray-900' : 'text-red-600'}`}>{formatCurrency(m.saldo)}</span>
+                  </div>
+                  <div className="flex gap-3 text-xs text-gray-500">
+                    <span>Rec: <span className="text-emerald-600 font-medium">{formatCurrency(m.recebido)}</span></span>
+                    <span>Ret: <span className="text-purple-600 font-medium">{formatCurrency(m.retirado)}</span></span>
+                  </div>
+                </div>
+                {/* Desktop */}
+                <div className="hidden sm:grid grid-cols-5 gap-4 items-center px-5 py-3">
+                  <span className="text-sm font-medium text-gray-900 col-span-2">{m.nome}</span>
+                  <span className="text-sm text-emerald-600 font-semibold text-right">{formatCurrency(m.recebido)}</span>
+                  <span className="text-sm text-purple-600 font-semibold text-right">{formatCurrency(m.retirado)}</span>
+                  <span className={`text-sm font-bold text-right ${m.saldo >= 0 ? 'text-gray-900' : 'text-red-600'}`}>
+                    {formatCurrency(m.saldo)}
+                  </span>
+                </div>
               </div>
             ))}
           </div>
@@ -387,10 +420,21 @@ export default async function RelatoriosPage({ searchParams }: { searchParams: R
         </div>
         <div className="divide-y divide-gray-50">
           {veiculos?.map(v => (
-            <div key={v.id} className="grid grid-cols-4 gap-4 items-center px-5 py-3">
-              <span className="text-sm font-bold tracking-wider text-gray-900">{v.placa}</span>
-              <span className="text-sm text-gray-900 col-span-2">{v.marca} {v.modelo} · {v.ano}</span>
-              <span className="text-sm text-gray-500">{v.status}</span>
+            <div key={v.id}>
+              {/* Mobile */}
+              <div className="sm:hidden flex items-center justify-between px-4 py-3.5">
+                <div>
+                  <p className="text-sm font-bold tracking-wider text-gray-900">{v.placa}</p>
+                  <p className="text-xs text-gray-500">{v.marca} {v.modelo} · {v.ano}</p>
+                </div>
+                <span className="text-xs text-gray-400">{v.status}</span>
+              </div>
+              {/* Desktop */}
+              <div className="hidden sm:grid grid-cols-4 gap-4 items-center px-5 py-3">
+                <span className="text-sm font-bold tracking-wider text-gray-900">{v.placa}</span>
+                <span className="text-sm text-gray-900 col-span-2">{v.marca} {v.modelo} · {v.ano}</span>
+                <span className="text-sm text-gray-500">{v.status}</span>
+              </div>
             </div>
           ))}
         </div>

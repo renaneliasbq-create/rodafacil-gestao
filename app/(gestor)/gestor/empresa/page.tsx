@@ -65,7 +65,7 @@ export default async function EmpresaPage() {
   })
 
   return (
-    <div className="p-6 lg:p-8 space-y-6">
+    <div className="p-4 lg:p-8 space-y-4 lg:space-y-6">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-extrabold text-gray-900">Gastos do CNPJ</h1>
@@ -112,16 +112,34 @@ export default async function EmpresaPage() {
                 const cat = extractCategoria(g.descricao)
                 const desc = extractDescricao(g.descricao)
                 return (
-                  <div key={g.id} className="grid grid-cols-4 gap-4 items-center px-5 py-3">
-                    <p className="text-sm text-gray-600">{formatDate(g.data)}</p>
-                    <span className={`badge w-fit text-xs ${COLOR[cat] ?? 'bg-gray-100 text-gray-500'}`}>
-                      {LABEL[cat] ?? cat}
-                    </span>
-                    <p className="text-sm text-gray-700">{desc}</p>
-                    <div className="flex items-center justify-end gap-1">
-                      <p className="text-sm font-semibold text-gray-900">{formatCurrency(g.valor)}</p>
-                      <EditarGasto gasto={{ id: g.id, valor: g.valor, data: g.data, categoria: cat, descricao: desc }} />
-                      <DeleteGasto id={g.id} />
+                  <div key={g.id}>
+                    {/* Mobile */}
+                    <div className="sm:hidden px-4 py-3.5">
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="min-w-0">
+                          <span className={`badge text-xs ${COLOR[cat] ?? 'bg-gray-100 text-gray-500'}`}>{LABEL[cat] ?? cat}</span>
+                          <p className="text-sm text-gray-700 mt-1">{desc}</p>
+                          <p className="text-xs text-gray-400 mt-0.5">{formatDate(g.data)}</p>
+                        </div>
+                        <div className="flex items-center gap-1 flex-shrink-0">
+                          <p className="text-sm font-bold text-gray-900">{formatCurrency(g.valor)}</p>
+                          <EditarGasto gasto={{ id: g.id, valor: g.valor, data: g.data, categoria: cat, descricao: desc }} />
+                          <DeleteGasto id={g.id} />
+                        </div>
+                      </div>
+                    </div>
+                    {/* Desktop */}
+                    <div className="hidden sm:grid grid-cols-4 gap-4 items-center px-5 py-3">
+                      <p className="text-sm text-gray-600">{formatDate(g.data)}</p>
+                      <span className={`badge w-fit text-xs ${COLOR[cat] ?? 'bg-gray-100 text-gray-500'}`}>
+                        {LABEL[cat] ?? cat}
+                      </span>
+                      <p className="text-sm text-gray-700">{desc}</p>
+                      <div className="flex items-center justify-end gap-1">
+                        <p className="text-sm font-semibold text-gray-900">{formatCurrency(g.valor)}</p>
+                        <EditarGasto gasto={{ id: g.id, valor: g.valor, data: g.data, categoria: cat, descricao: desc }} />
+                        <DeleteGasto id={g.id} />
+                      </div>
                     </div>
                   </div>
                 )

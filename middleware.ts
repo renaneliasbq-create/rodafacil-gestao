@@ -25,8 +25,8 @@ export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
 
   // Rotas públicas — não precisa de auth
-  const publicRoutes = ['/login', '/auth/callback']
-  if (publicRoutes.some(r => pathname.startsWith(r))) {
+  const publicRoutes = ['/', '/login', '/auth/callback']
+  if (publicRoutes.some(r => pathname === r || (r !== '/' && pathname.startsWith(r)))) {
     // Se já está logado, redireciona para o dashboard correto
     if (user) {
       const { data: profile } = await supabase
@@ -39,17 +39,6 @@ export async function middleware(request: NextRequest) {
       return NextResponse.redirect(new URL(dest, request.url))
     }
     return supabaseResponse
-  }
-
-  // Rota raiz → redireciona
-  if (pathname === '/') {
-    if (user) {
-      const { data: profile } = await supabase
-        .from('users').select('tipo').eq('id', user.id).single()
-      const dest = profile?.tipo === 'gestor' ? '/gestor' : '/motorista'
-      return NextResponse.redirect(new URL(dest, request.url))
-    }
-    return NextResponse.redirect(new URL('/login', request.url))
   }
 
   // Rotas protegidas — exige autenticação

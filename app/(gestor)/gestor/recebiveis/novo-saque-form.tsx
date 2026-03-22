@@ -34,12 +34,12 @@ export function NovoSaqueForm() {
       </button>
 
       {open && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-          <div className="bg-white rounded-2xl shadow-xl w-full max-w-sm p-6">
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/40">
+          <div className="bg-white rounded-t-2xl sm:rounded-2xl shadow-xl w-full sm:max-w-sm p-5 sm:p-6 sm:m-4">
             <div className="flex items-center justify-between mb-5">
               <h2 className="text-lg font-bold text-gray-900">Nova retirada</h2>
-              <button onClick={() => setOpen(false)} className="text-gray-400 hover:text-gray-600">
-                <X className="w-5 h-5" />
+              <button onClick={() => setOpen(false)} className="w-11 h-11 flex items-center justify-center hover:bg-gray-100 rounded-xl">
+                <X className="w-5 h-5 text-gray-500" />
               </button>
             </div>
 
@@ -63,7 +63,7 @@ export function NovoSaqueForm() {
                 <input name="descricao" type="text" placeholder="Ex: Pro-labore, pessoal..." className="input" />
               </div>
 
-              <button type="submit" disabled={pending} className="btn-primary w-full">
+              <button type="submit" disabled={pending} className="btn-primary w-full min-h-[44px] pb-2">
                 {pending ? <><Loader2 className="w-4 h-4 animate-spin" />Salvando...</> : 'Registrar retirada'}
               </button>
             </form>

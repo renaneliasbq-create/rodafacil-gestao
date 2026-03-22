@@ -58,7 +58,7 @@ export default async function ReceitasPage({ searchParams }: { searchParams: { o
   }
 
   return (
-    <div className="p-6 lg:p-8 space-y-6">
+    <div className="p-4 lg:p-8 space-y-4 lg:space-y-6">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-extrabold text-gray-900">Receitas</h1>
@@ -179,19 +179,39 @@ export default async function ReceitasPage({ searchParams }: { searchParams: { o
                 {lista.map((p) => {
                   const m = (Array.isArray(p.motorista) ? p.motorista[0] : p.motorista) as { nome: string } | null
                   return (
-                    <div key={p.id} className="grid grid-cols-5 gap-4 items-center px-5 py-3">
-                      <div className="col-span-2">
-                        <p className="text-sm font-medium text-gray-900">{m?.nome ?? '—'}</p>
-                        <p className="text-xs text-gray-400">{p.referencia ?? 'Aluguel'}</p>
+                    <div key={p.id}>
+                      {/* Mobile */}
+                      <div className="sm:hidden px-4 py-3.5">
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="min-w-0">
+                            <p className="text-sm font-semibold text-gray-900 truncate">{m?.nome ?? '—'}</p>
+                            <p className="text-xs text-gray-400">{p.referencia ?? 'Aluguel'} · {formatDate(p.data_vencimento)}</p>
+                          </div>
+                          <p className="text-sm font-bold text-gray-900 flex-shrink-0">{formatCurrency(p.valor)}</p>
+                        </div>
+                        <div className="flex items-center gap-2 mt-2">
+                          <span className={`badge ${STATUS_COLORS[p.status as keyof typeof STATUS_COLORS]}`}>
+                            {STATUS_LABELS[p.status]}
+                          </span>
+                          {p.status !== 'pago' && <MarcarPagoForm id={p.id} />}
+                          <div className="ml-auto"><AcoesReceita pagamento={p} /></div>
+                        </div>
                       </div>
-                      <p className="text-sm text-gray-600">{formatDate(p.data_vencimento)}</p>
-                      <div className="flex items-center gap-2">
-                        <span className={`badge ${STATUS_COLORS[p.status as keyof typeof STATUS_COLORS]}`}>
-                          {STATUS_LABELS[p.status]}
-                        </span>
-                        {p.status !== 'pago' && <MarcarPagoForm id={p.id} />}
+                      {/* Desktop */}
+                      <div className="hidden sm:grid grid-cols-5 gap-4 items-center px-5 py-3">
+                        <div className="col-span-2">
+                          <p className="text-sm font-medium text-gray-900">{m?.nome ?? '—'}</p>
+                          <p className="text-xs text-gray-400">{p.referencia ?? 'Aluguel'}</p>
+                        </div>
+                        <p className="text-sm text-gray-600">{formatDate(p.data_vencimento)}</p>
+                        <div className="flex items-center gap-2">
+                          <span className={`badge ${STATUS_COLORS[p.status as keyof typeof STATUS_COLORS]}`}>
+                            {STATUS_LABELS[p.status]}
+                          </span>
+                          {p.status !== 'pago' && <MarcarPagoForm id={p.id} />}
+                        </div>
+                        <AcoesReceita pagamento={p} />
                       </div>
-                      <AcoesReceita pagamento={p} />
                     </div>
                   )
                 })}

@@ -30,7 +30,7 @@ export default async function RecebiveisPage({ searchParams }: { searchParams: {
     : 0
 
   return (
-    <div className="p-6 lg:p-8 space-y-6">
+    <div className="p-4 lg:p-8 space-y-4 lg:space-y-6">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-extrabold text-gray-900">Recebíveis</h1>
@@ -125,16 +125,31 @@ export default async function RecebiveisPage({ searchParams }: { searchParams: {
             </div>
             <div className="divide-y divide-gray-50">
               {(saques ?? []).map((s) => (
-                <div key={s.id} className="grid grid-cols-4 gap-4 items-center px-5 py-3">
-                  <p className="text-sm text-gray-600">{formatDate(s.data)}</p>
-                  <p className="col-span-2 text-sm text-gray-900">{s.descricao ?? '—'}</p>
-                  <div className="flex items-center justify-end gap-3">
-                    <p className="text-sm font-semibold text-red-600">{formatCurrency(Number(s.valor))}</p>
+                <div key={s.id}>
+                  {/* Mobile */}
+                  <div className="sm:hidden flex items-center justify-between px-4 py-3.5">
+                    <div>
+                      <p className="text-sm font-semibold text-red-600">{formatCurrency(Number(s.valor))}</p>
+                      <p className="text-xs text-gray-400">{formatDate(s.data)}{s.descricao ? ` · ${s.descricao}` : ''}</p>
+                    </div>
                     <form action={async () => { 'use server'; await deletarSaque(s.id) }}>
-                      <button type="submit" className="p-1 text-gray-300 hover:text-red-500 hover:bg-red-50 rounded transition-colors" title="Excluir">
-                        <Trash2 className="w-3.5 h-3.5" />
+                      <button type="submit" className="p-1.5 text-gray-300 hover:text-red-500 hover:bg-red-50 rounded transition-colors" title="Excluir">
+                        <Trash2 className="w-4 h-4" />
                       </button>
                     </form>
+                  </div>
+                  {/* Desktop */}
+                  <div className="hidden sm:grid grid-cols-4 gap-4 items-center px-5 py-3">
+                    <p className="text-sm text-gray-600">{formatDate(s.data)}</p>
+                    <p className="col-span-2 text-sm text-gray-900">{s.descricao ?? '—'}</p>
+                    <div className="flex items-center justify-end gap-3">
+                      <p className="text-sm font-semibold text-red-600">{formatCurrency(Number(s.valor))}</p>
+                      <form action={async () => { 'use server'; await deletarSaque(s.id) }}>
+                        <button type="submit" className="p-1 text-gray-300 hover:text-red-500 hover:bg-red-50 rounded transition-colors" title="Excluir">
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </form>
+                    </div>
                   </div>
                 </div>
               ))}

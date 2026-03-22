@@ -71,7 +71,7 @@ export default async function DespesasPage({ searchParams }: { searchParams: Rec
   const despesasSemVeiculo = (despesas ?? []).filter(d => !d.veiculo_id).reduce((s, d) => s + d.valor, 0)
 
   return (
-    <div className="p-6 lg:p-8 space-y-6">
+    <div className="p-4 lg:p-8 space-y-4 lg:space-y-6">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-extrabold text-gray-900">Despesas</h1>
@@ -183,24 +183,47 @@ export default async function DespesasPage({ searchParams }: { searchParams: Rec
                 const v = d.veiculo_id ? veiculoById[d.veiculo_id] : null
                 const m = d.motorista_id ? motoristaById[d.motorista_id] : null
                 return (
-                  <div key={d.id} className="grid grid-cols-5 gap-4 items-center px-5 py-3">
-                    <p className="text-sm text-gray-600">{formatDate(d.data)}</p>
-                    <span className={`badge w-fit text-xs ${CATEGORIA_COLORS[d.categoria] ?? 'bg-gray-100 text-gray-500'}`}>
-                      {CATEGORIA_LABELS[d.categoria] ?? d.categoria}
-                    </span>
-                    <div className="col-span-2">
-                      <p className="text-sm text-gray-900">{d.descricao ?? '—'}</p>
-                      <p className="text-xs text-gray-400">
-                        {v ? `${v.placa} · ${v.modelo}` : ''}
-                        {v && m ? ' · ' : ''}
-                        {m ? m.nome : ''}
-                      </p>
+                  <div key={d.id}>
+                    {/* Mobile */}
+                    <div className="sm:hidden px-4 py-3.5">
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="min-w-0">
+                          <span className={`badge text-xs ${CATEGORIA_COLORS[d.categoria] ?? 'bg-gray-100 text-gray-500'}`}>
+                            {CATEGORIA_LABELS[d.categoria] ?? d.categoria}
+                          </span>
+                          <p className="text-sm text-gray-900 mt-1">{d.descricao ?? '—'}</p>
+                          <p className="text-xs text-gray-400 mt-0.5">
+                            {formatDate(d.data)}
+                            {v ? ` · ${v.placa}` : ''}
+                            {m ? ` · ${m.nome}` : ''}
+                          </p>
+                        </div>
+                        <div className="flex flex-col items-end gap-1 flex-shrink-0">
+                          <p className="text-sm font-bold text-gray-900">{formatCurrency(d.valor)}</p>
+                          <AcoesDespesa despesa={d} veiculos={veiculos ?? []} motoristas={motoristas ?? []} />
+                        </div>
+                      </div>
                     </div>
-                    <AcoesDespesa
-                      despesa={d}
-                      veiculos={veiculos ?? []}
-                      motoristas={motoristas ?? []}
-                    />
+                    {/* Desktop */}
+                    <div className="hidden sm:grid grid-cols-5 gap-4 items-center px-5 py-3">
+                      <p className="text-sm text-gray-600">{formatDate(d.data)}</p>
+                      <span className={`badge w-fit text-xs ${CATEGORIA_COLORS[d.categoria] ?? 'bg-gray-100 text-gray-500'}`}>
+                        {CATEGORIA_LABELS[d.categoria] ?? d.categoria}
+                      </span>
+                      <div className="col-span-2">
+                        <p className="text-sm text-gray-900">{d.descricao ?? '—'}</p>
+                        <p className="text-xs text-gray-400">
+                          {v ? `${v.placa} · ${v.modelo}` : ''}
+                          {v && m ? ' · ' : ''}
+                          {m ? m.nome : ''}
+                        </p>
+                      </div>
+                      <AcoesDespesa
+                        despesa={d}
+                        veiculos={veiculos ?? []}
+                        motoristas={motoristas ?? []}
+                      />
+                    </div>
                   </div>
                 )
               })}

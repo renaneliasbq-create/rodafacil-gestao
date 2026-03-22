@@ -32,7 +32,7 @@ export default async function MotoristasPage({ searchParams }: { searchParams: {
     contratos?.find(c => c.motorista_id === id)
 
   return (
-    <div className="p-6 lg:p-8 space-y-6">
+    <div className="p-4 lg:p-8 space-y-4 lg:space-y-6">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-extrabold text-gray-900">Motoristas</h1>
@@ -67,36 +67,61 @@ export default async function MotoristasPage({ searchParams }: { searchParams: {
                 const telefoneNumeros = m.telefone?.replace(/\D/g, '')
                 const whatsappUrl = telefoneNumeros ? `https://wa.me/55${telefoneNumeros}` : null
                 return (
-                  <div key={m.id} className="relative grid grid-cols-5 gap-4 items-center px-5 py-4 hover:bg-gray-50 transition-colors">
+                  <div key={m.id} className="relative hover:bg-gray-50 transition-colors">
                     <Link href={`/gestor/motoristas/${m.id}`} className="absolute inset-0" />
-                    <div className="col-span-2 relative z-10 pointer-events-none">
-                      <p className="text-sm font-semibold text-gray-900">{m.nome}</p>
-                      <p className="text-xs text-gray-400">{m.email}</p>
+                    {/* Mobile */}
+                    <div className="sm:hidden flex items-center justify-between px-4 py-3.5">
+                      <div className="min-w-0 flex-1">
+                        <p className="text-sm font-semibold text-gray-900 truncate">{m.nome}</p>
+                        <p className="text-xs text-gray-400 truncate">{m.email}</p>
+                        {veiculo && (
+                          <span className="mt-1 inline-block badge bg-blue-100 text-blue-700">{veiculo.placa}</span>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-2 ml-3 flex-shrink-0 relative z-10">
+                        {whatsappUrl && (
+                          <a
+                            href={whatsappUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-green-500 hover:text-green-600 transition-colors"
+                            title="Abrir WhatsApp"
+                          >
+                            <WhatsAppIcon />
+                          </a>
+                        )}
+                        <p className="text-xs text-gray-500">{m.telefone ?? '—'}</p>
+                      </div>
                     </div>
-                    <div className="relative z-10 flex items-center gap-2">
-                      <p className="text-sm text-gray-600">{m.telefone ?? '—'}</p>
-                      {whatsappUrl && (
-                        <a
-                          href={whatsappUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-green-500 hover:text-green-600 transition-colors flex-shrink-0"
-                          title="Abrir WhatsApp"
-                        >
-                          <WhatsAppIcon />
-                        </a>
-                      )}
+                    {/* Desktop */}
+                    <div className="hidden sm:grid grid-cols-5 gap-4 items-center px-5 py-4">
+                      <div className="col-span-2 pointer-events-none">
+                        <p className="text-sm font-semibold text-gray-900">{m.nome}</p>
+                        <p className="text-xs text-gray-400">{m.email}</p>
+                      </div>
+                      <div className="relative z-10 flex items-center gap-2">
+                        <p className="text-sm text-gray-600">{m.telefone ?? '—'}</p>
+                        {whatsappUrl && (
+                          <a
+                            href={whatsappUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-green-500 hover:text-green-600 transition-colors flex-shrink-0"
+                            title="Abrir WhatsApp"
+                          >
+                            <WhatsAppIcon />
+                          </a>
+                        )}
+                      </div>
+                      <div className="pointer-events-none">
+                        {veiculo ? (
+                          <span className="badge bg-blue-100 text-blue-700">{veiculo.placa}</span>
+                        ) : (
+                          <span className="text-xs text-gray-400">Sem veículo</span>
+                        )}
+                      </div>
+                      <p className="pointer-events-none text-xs text-gray-400">{formatDate(m.created_at)}</p>
                     </div>
-                    <div className="relative z-10 pointer-events-none">
-                      {veiculo ? (
-                        <span className="badge bg-blue-100 text-blue-700">
-                          {veiculo.placa}
-                        </span>
-                      ) : (
-                        <span className="text-xs text-gray-400">Sem veículo</span>
-                      )}
-                    </div>
-                    <p className="relative z-10 pointer-events-none text-xs text-gray-400">{formatDate(m.created_at)}</p>
                   </div>
                 )
               })}

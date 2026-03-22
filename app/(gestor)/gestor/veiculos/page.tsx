@@ -30,7 +30,7 @@ export default async function VeiculosPage({ searchParams }: { searchParams: { o
   const disponiveis = veiculos?.filter(v => v.status === 'disponivel').length ?? 0
 
   return (
-    <div className="p-6 lg:p-8 space-y-6">
+    <div className="p-4 lg:p-8 space-y-4 lg:space-y-6">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-extrabold text-gray-900">Veículos</h1>
@@ -62,20 +62,30 @@ export default async function VeiculosPage({ searchParams }: { searchParams: { o
             </div>
             <div className="divide-y divide-gray-50">
               {veiculos.map((v) => (
-                <Link
-                  key={v.id}
-                  href={`/gestor/veiculos/${v.id}`}
-                  className="grid grid-cols-5 gap-4 items-center px-5 py-4 hover:bg-gray-50 transition-colors"
-                >
-                  <p className="text-sm font-bold tracking-wider text-gray-900">{v.placa}</p>
-                  <div className="col-span-2">
-                    <p className="text-sm font-semibold text-gray-900">{v.marca} {v.modelo}</p>
-                    <p className="text-xs text-gray-400">{v.ano}{v.cor ? ` · ${v.cor}` : ''}</p>
+                <Link key={v.id} href={`/gestor/veiculos/${v.id}`} className="block hover:bg-gray-50 transition-colors">
+                  {/* Mobile */}
+                  <div className="sm:hidden flex items-center justify-between px-4 py-3.5">
+                    <div>
+                      <p className="text-sm font-bold tracking-wider text-gray-900">{v.placa}</p>
+                      <p className="text-xs text-gray-500">{v.marca} {v.modelo} · {v.ano}</p>
+                      {motoristaAtual(v.id) && <p className="text-xs text-gray-400 mt-0.5">{motoristaAtual(v.id)}</p>}
+                    </div>
+                    <span className={`badge ${STATUS_COLORS[v.status as keyof typeof STATUS_COLORS]}`}>
+                      {STATUS_LABELS[v.status]}
+                    </span>
                   </div>
-                  <p className="text-sm text-gray-600">{motoristaAtual(v.id) ?? '—'}</p>
-                  <span className={`badge w-fit ${STATUS_COLORS[v.status as keyof typeof STATUS_COLORS]}`}>
-                    {STATUS_LABELS[v.status]}
-                  </span>
+                  {/* Desktop */}
+                  <div className="hidden sm:grid grid-cols-5 gap-4 items-center px-5 py-4">
+                    <p className="text-sm font-bold tracking-wider text-gray-900">{v.placa}</p>
+                    <div className="col-span-2">
+                      <p className="text-sm font-semibold text-gray-900">{v.marca} {v.modelo}</p>
+                      <p className="text-xs text-gray-400">{v.ano}{v.cor ? ` · ${v.cor}` : ''}</p>
+                    </div>
+                    <p className="text-sm text-gray-600">{motoristaAtual(v.id) ?? '—'}</p>
+                    <span className={`badge w-fit ${STATUS_COLORS[v.status as keyof typeof STATUS_COLORS]}`}>
+                      {STATUS_LABELS[v.status]}
+                    </span>
+                  </div>
                 </Link>
               ))}
             </div>

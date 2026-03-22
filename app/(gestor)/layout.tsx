@@ -20,7 +20,7 @@ export default async function GestorLayout({ children }: { children: React.React
     <div className="flex h-screen overflow-hidden bg-gray-50">
       <GestorSidebar userName={profile.nome} />
 
-      <main className="flex-1 overflow-y-auto">
+      <main className="flex-1 overflow-y-auto pb-16 lg:pb-0">
         {children}
       </main>
     </div>

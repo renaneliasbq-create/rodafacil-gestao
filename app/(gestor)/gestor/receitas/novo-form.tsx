@@ -32,12 +32,12 @@ export function NovoPagamentoForm({ motoristas, contratos }: { motoristas: Motor
       </button>
 
       {open && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-          <div className="bg-white rounded-2xl shadow-xl w-full max-w-md p-6 m-4">
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/40">
+          <div className="bg-white rounded-t-2xl sm:rounded-2xl shadow-xl w-full sm:max-w-md p-5 sm:p-6 sm:m-4">
             <div className="flex items-center justify-between mb-5">
               <h2 className="text-lg font-bold text-gray-900">Novo lançamento</h2>
-              <button onClick={() => setOpen(false)} className="p-1.5 hover:bg-gray-100 rounded-lg">
-                <X className="w-4 h-4 text-gray-500" />
+              <button onClick={() => setOpen(false)} className="w-11 h-11 flex items-center justify-center hover:bg-gray-100 rounded-xl">
+                <X className="w-5 h-5 text-gray-500" />
               </button>
             </div>
 
@@ -62,7 +62,7 @@ export function NovoPagamentoForm({ motoristas, contratos }: { motoristas: Motor
                 </select>
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">Valor *</label>
                   <input name="valor" type="number" step="0.01" required className="input" placeholder="0,00" />
@@ -78,8 +78,8 @@ export function NovoPagamentoForm({ motoristas, contratos }: { motoristas: Motor
                 <input name="referencia" type="text" className="input" placeholder='Ex: "Aluguel Março/2026"' />
               </div>
 
-              <div className="flex gap-3 pt-2">
-                <button type="button" onClick={() => setOpen(false)} className="btn-secondary flex-1">Cancelar</button>
+              <div className="flex gap-3 pt-2 pb-2">
+                <button type="button" onClick={() => setOpen(false)} className="btn-secondary flex-1 min-h-[44px]">Cancelar</button>
                 <div className="flex-1"><Submit /></div>
               </div>
             </form>
