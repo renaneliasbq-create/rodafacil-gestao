@@ -41,7 +41,12 @@
 
   /* Badge de status */
   .badge {
-    @apply inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold;
+    @apply inline-flex items-center rounded-full px-2 py-0.5 text-xs font-semibold;
+  }
+  @media (min-width: 768px) {
+    .badge {
+      @apply px-2.5;
+    }
   }
 
   /* Sidebar item */

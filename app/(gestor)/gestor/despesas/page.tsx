@@ -199,7 +199,6 @@ export default async function DespesasPage({ searchParams }: { searchParams: Rec
                           </p>
                         </div>
                         <div className="flex flex-col items-end gap-1 flex-shrink-0">
-                          <p className="text-sm font-bold text-gray-900">{formatCurrency(d.valor)}</p>
                           <AcoesDespesa despesa={d} veiculos={veiculos ?? []} motoristas={motoristas ?? []} />
                         </div>
                       </div>

@@ -187,14 +187,13 @@ export default async function ReceitasPage({ searchParams }: { searchParams: { o
                             <p className="text-sm font-semibold text-gray-900 truncate">{m?.nome ?? '—'}</p>
                             <p className="text-xs text-gray-400">{p.referencia ?? 'Aluguel'} · {formatDate(p.data_vencimento)}</p>
                           </div>
-                          <p className="text-sm font-bold text-gray-900 flex-shrink-0">{formatCurrency(p.valor)}</p>
+                          <AcoesReceita pagamento={p} />
                         </div>
                         <div className="flex items-center gap-2 mt-2">
                           <span className={`badge ${STATUS_COLORS[p.status as keyof typeof STATUS_COLORS]}`}>
                             {STATUS_LABELS[p.status]}
                           </span>
                           {p.status !== 'pago' && <MarcarPagoForm id={p.id} />}
-                          <div className="ml-auto"><AcoesReceita pagamento={p} /></div>
                         </div>
                       </div>
                       {/* Desktop */}

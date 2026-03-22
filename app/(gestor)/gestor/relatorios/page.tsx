@@ -216,19 +216,19 @@ export default async function RelatoriosPage({ searchParams }: { searchParams: R
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
         <div className="card p-5 text-center">
           <p className="text-xs text-gray-500 uppercase tracking-wide font-medium">Receita total</p>
-          <p className="text-2xl font-bold text-blue-700 mt-1">{formatCurrency(totalReceita)}</p>
+          <p className="text-base md:text-2xl font-bold text-blue-700 mt-1 truncate">{formatCurrency(totalReceita)}</p>
         </div>
         <div className="card p-5 text-center">
           <p className="text-xs text-gray-500 uppercase tracking-wide font-medium">Retiradas</p>
-          <p className="text-2xl font-bold text-purple-600 mt-1">{formatCurrency(totalRetirada)}</p>
+          <p className="text-base md:text-2xl font-bold text-purple-600 mt-1 truncate">{formatCurrency(totalRetirada)}</p>
         </div>
         <div className="card p-5 text-center">
           <p className="text-xs text-gray-500 uppercase tracking-wide font-medium">Despesas</p>
-          <p className="text-2xl font-bold text-red-600 mt-1">{formatCurrency(totalDespesa)}</p>
+          <p className="text-base md:text-2xl font-bold text-red-600 mt-1 truncate">{formatCurrency(totalDespesa)}</p>
         </div>
         <div className="card p-5 text-center">
           <p className="text-xs text-gray-500 uppercase tracking-wide font-medium">Lucro líquido</p>
-          <p className={`text-2xl font-bold mt-1 ${totalLucro >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>
+          <p className={`text-base md:text-2xl font-bold mt-1 truncate ${totalLucro >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>
             {formatCurrency(totalLucro)}
           </p>
         </div>
@@ -241,17 +241,17 @@ export default async function RelatoriosPage({ searchParams }: { searchParams: R
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div className="bg-amber-50 rounded-xl p-4 text-center">
               <p className="text-xs text-amber-600 font-medium uppercase tracking-wide mb-1">⛽ Bônus combustível</p>
-              <p className="text-2xl font-bold text-amber-700">{formatCurrency(bonusCombustivel)}</p>
+              <p className="text-base md:text-2xl font-bold text-amber-700 truncate">{formatCurrency(bonusCombustivel)}</p>
               <p className="text-xs text-amber-500 mt-1">Pagamentos em dia · R$ 180 cada</p>
             </div>
             <div className="bg-red-50 rounded-xl p-4 text-center">
               <p className="text-xs text-red-600 font-medium uppercase tracking-wide mb-1">🎄 Bônus de natal</p>
-              <p className="text-2xl font-bold text-red-700">{formatCurrency(bonusNatal)}</p>
+              <p className="text-base md:text-2xl font-bold text-red-700 truncate">{formatCurrency(bonusNatal)}</p>
               <p className="text-xs text-red-400 mt-1">Ceia de natal · R$ 150 cada</p>
             </div>
             <div className="bg-gray-50 rounded-xl p-4 text-center">
               <p className="text-xs text-gray-500 font-medium uppercase tracking-wide mb-1">Total em bônus</p>
-              <p className="text-2xl font-bold text-gray-800">{formatCurrency(totalBonus)}</p>
+              <p className="text-base md:text-2xl font-bold text-gray-800 truncate">{formatCurrency(totalBonus)}</p>
               <p className="text-xs text-gray-400 mt-1">Investimento no relacionamento</p>
             </div>
           </div>
@@ -372,8 +372,49 @@ export default async function RelatoriosPage({ searchParams }: { searchParams: R
           </div>
           <div className="divide-y divide-gray-50">
             {paybackPorVeiculo.map(v => (
-              <div key={v.id} className="px-5 py-4">
-                <div className="grid grid-cols-6 gap-3 items-center mb-2">
+              <div key={v.id} className="px-4 sm:px-5 py-4">
+                {/* Mobile */}
+                <div className="sm:hidden flex flex-col gap-2 min-w-0">
+                  <div className="flex items-start justify-between gap-2 min-w-0">
+                    <div className="min-w-0">
+                      <p className="text-sm font-semibold text-gray-900 truncate">{v.nome}</p>
+                      <p className="text-xs text-gray-400 font-mono">{v.placa}</p>
+                    </div>
+                    <div className="shrink-0">
+                      {v.pago ? (
+                        <span className="badge bg-emerald-100 text-emerald-700 text-xs">Pago ✓</span>
+                      ) : (
+                        <span className="text-sm font-bold text-blue-600">{v.pct.toFixed(1)}%</span>
+                      )}
+                    </div>
+                  </div>
+                  <div className="flex flex-col gap-1 text-xs text-gray-500 min-w-0">
+                    <div className="flex justify-between min-w-0">
+                      <span>Investimento</span>
+                      <span className="font-medium text-gray-700">{formatCurrency(v.valorCompra)}</span>
+                    </div>
+                    <div className="flex justify-between min-w-0">
+                      <span>Receita</span>
+                      <span className="font-semibold text-emerald-600">{formatCurrency(v.receita)}</span>
+                    </div>
+                    <div className="flex justify-between min-w-0">
+                      <span>Despesas</span>
+                      <span className="font-semibold text-red-500">{formatCurrency(v.despesa)}</span>
+                    </div>
+                    <div className="flex justify-between min-w-0">
+                      <span>Lucro acumulado</span>
+                      <span className={`font-medium ${v.lucroAcumulado >= 0 ? 'text-gray-600' : 'text-red-500'}`}>{formatCurrency(v.lucroAcumulado)}</span>
+                    </div>
+                    {!v.pago && (
+                      <div className="flex justify-between min-w-0">
+                        <span>Falta recuperar</span>
+                        <span className="font-medium text-gray-600">{formatCurrency(v.valorCompra - v.lucroAcumulado)}</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+                {/* Desktop */}
+                <div className="hidden sm:grid grid-cols-6 gap-3 items-center mb-2">
                   <div className="col-span-2">
                     <p className="text-sm font-semibold text-gray-900">{v.nome}</p>
                     <p className="text-xs text-gray-400 font-mono">{v.placa}</p>
@@ -390,13 +431,13 @@ export default async function RelatoriosPage({ searchParams }: { searchParams: R
                   </div>
                 </div>
                 {/* Barra de progresso */}
-                <div className="w-full bg-gray-100 rounded-full h-1.5 overflow-hidden">
+                <div className="w-full bg-gray-100 rounded-full h-1.5 overflow-hidden mt-2">
                   <div
                     className={`h-1.5 rounded-full ${v.pago ? 'bg-emerald-500' : 'bg-blue-500'}`}
                     style={{ width: `${v.pct}%` }}
                   />
                 </div>
-                <p className="text-xs text-gray-400 mt-1">
+                <p className="hidden sm:block text-xs text-gray-400 mt-1">
                   Lucro acumulado: <span className={`font-medium ${v.lucroAcumulado >= 0 ? 'text-gray-600' : 'text-red-500'}`}>{formatCurrency(v.lucroAcumulado)}</span>
                   {!v.pago && (
                     <> · Falta recuperar: <span className="font-medium text-gray-600">{formatCurrency(v.valorCompra - v.lucroAcumulado)}</span></>

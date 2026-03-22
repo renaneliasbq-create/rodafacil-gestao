@@ -5,6 +5,13 @@ import { criarMotorista } from '../actions'
 import { ArrowLeft, Loader2, UserPlus } from 'lucide-react'
 import Link from 'next/link'
 
+function maskTelefone(value: string) {
+  const digits = value.replace(/\D/g, '').slice(0, 11)
+  if (digits.length <= 2) return digits.replace(/^(\d{0,2})/, '($1')
+  if (digits.length <= 7) return digits.replace(/^(\d{2})(\d{0,5})/, '($1) $2')
+  return digits.replace(/^(\d{2})(\d{5})(\d{0,4})/, '($1) $2-$3')
+}
+
 function SubmitButton() {
   const { pending } = useFormStatus()
   return (
@@ -62,7 +69,13 @@ export default function NovoMotoristaPage() {
             <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">
               Telefone
             </label>
-            <input name="telefone" type="tel" placeholder="(47) 99999-0000" className="input" />
+            <input
+              name="telefone"
+              type="tel"
+              placeholder="(47) 99999-0000"
+              className="input"
+              onChange={e => { e.target.value = maskTelefone(e.target.value) }}
+            />
           </div>
 
           <div>

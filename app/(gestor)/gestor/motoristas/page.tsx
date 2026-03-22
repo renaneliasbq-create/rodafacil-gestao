@@ -90,7 +90,7 @@ export default async function MotoristasPage({ searchParams }: { searchParams: {
                             <WhatsAppIcon />
                           </a>
                         )}
-                        <p className="text-xs text-gray-500">{m.telefone ?? '—'}</p>
+                        <p className="text-xs text-gray-500 whitespace-nowrap">{m.telefone ?? '—'}</p>
                       </div>
                     </div>
                     {/* Desktop */}
