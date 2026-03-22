@@ -73,6 +73,19 @@ export async function atualizarStatusVeiculo(id: string, status: string) {
   await supabase.from('veiculos').update({ status }).eq('id', id)
 }
 
+export async function prepararUpload(
+  entidade: 'veiculo' | 'motorista',
+  refId: string,
+  nomeOriginal: string,
+): Promise<{ signedUrl: string; token: string; path: string } | { error: string }> {
+  const supabase = createClient()
+  const nomeSanitizado = nomeOriginal.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-zA-Z0-9.\-_]/g, '_')
+  const path = `${entidade}/${refId}/${Date.now()}-${nomeSanitizado}`
+  const { data, error } = await supabase.storage.from('documentos').createSignedUploadUrl(path)
+  if (error || !data) return { error: error?.message ?? 'Erro ao gerar URL de upload' }
+  return { signedUrl: data.signedUrl, token: data.token, path }
+}
+
 export async function salvarDocumento(
   entidade: 'veiculo' | 'motorista',
   refId: string,

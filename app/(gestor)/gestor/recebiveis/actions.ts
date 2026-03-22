@@ -4,7 +4,7 @@ import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
 import { z } from 'zod'
 
-export type FormState = { error?: string } | null
+export type FormState = { error?: string; success?: boolean } | null
 
 const saqueSchema = z.object({
   valor: z.coerce.number().positive('Valor inválido'),
@@ -25,7 +25,7 @@ export async function registrarSaque(_prev: FormState, formData: FormData): Prom
 
   if (error) return { error: 'Erro ao registrar saque.' }
   revalidatePath('/gestor/recebiveis')
-  return null
+  return { success: true }
 }
 
 export async function deletarSaque(id: string): Promise<void> {

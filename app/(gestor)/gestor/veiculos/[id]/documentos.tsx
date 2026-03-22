@@ -3,7 +3,7 @@
 import { useRef, useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
-import { salvarDocumento, deletarDocumento } from '../actions'
+import { prepararUpload, salvarDocumento, deletarDocumento } from '../actions'
 import { FileText, Loader2, Paperclip, Trash2, Upload } from 'lucide-react'
 
 interface Documento {
@@ -35,22 +35,25 @@ export function DocumentosSection({ entidade, refId, documentos, label = 'Docume
     setUploading(true)
 
     try {
+      // 1. Gera URL assinada pelo servidor (não depende de auth no browser)
+      const prepared = await prepararUpload(entidade, refId, file.name)
+      if ('error' in prepared) throw new Error(prepared.error)
+
+      // 2. Faz upload direto para a URL assinada via fetch
+      const uploadRes = await fetch(prepared.signedUrl, {
+        method: 'PUT',
+        body: file,
+        headers: { 'Content-Type': file.type || 'application/octet-stream' },
+      })
+      if (!uploadRes.ok) throw new Error(`Erro no upload: ${uploadRes.status}`)
+
+      // 3. Monta URL pública e salva no banco
       const supabase = createClient()
-      const ext = file.name.split('.').pop()
-      const nomeSanitizado = file.name.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-zA-Z0-9.\-_]/g, '_')
-      const path = `${entidade}/${refId}/${Date.now()}-${nomeSanitizado}`
-
-      const { error: uploadError } = await supabase.storage
-        .from('documentos')
-        .upload(path, file, { upsert: false })
-
-      if (uploadError) throw new Error(uploadError.message)
-
       const { data: { publicUrl } } = supabase.storage
         .from('documentos')
-        .getPublicUrl(path)
+        .getPublicUrl(prepared.path)
 
-      const result = await salvarDocumento(entidade, refId, file.name, path, publicUrl)
+      const result = await salvarDocumento(entidade, refId, file.name, prepared.path, publicUrl)
       if (result?.error) throw new Error(result.error)
 
       router.refresh()

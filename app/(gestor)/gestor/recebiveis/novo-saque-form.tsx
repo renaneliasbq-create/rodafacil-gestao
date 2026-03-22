@@ -12,7 +12,7 @@ export function NovoSaqueForm() {
   const formRef = useRef<HTMLFormElement>(null)
 
   useEffect(() => {
-    if (state === null && open) {
+    if (state?.success) {
       setOpen(false)
       formRef.current?.reset()
       window.location.href = '/gestor/recebiveis?ok=1&t=' + Date.now()
