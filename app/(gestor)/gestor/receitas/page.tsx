@@ -78,15 +78,15 @@ export default async function ReceitasPage({ searchParams }: { searchParams: { o
       <div className="grid grid-cols-3 gap-4">
         <div className="card p-4 text-center">
           <p className="text-xs text-gray-500 uppercase tracking-wide font-medium">Recebido</p>
-          <p className="text-xl font-bold text-emerald-600 mt-1">{formatCurrency(totalPago)}</p>
+          <p className="text-base md:text-xl font-bold text-emerald-600 mt-1 truncate">{formatCurrency(totalPago)}</p>
         </div>
         <div className="card p-4 text-center">
           <p className="text-xs text-gray-500 uppercase tracking-wide font-medium">Pendente</p>
-          <p className="text-xl font-bold text-yellow-600 mt-1">{formatCurrency(totalPendente)}</p>
+          <p className="text-base md:text-xl font-bold text-yellow-600 mt-1 truncate">{formatCurrency(totalPendente)}</p>
         </div>
         <div className="card p-4 text-center">
           <p className="text-xs text-gray-500 uppercase tracking-wide font-medium">Atrasado</p>
-          <p className="text-xl font-bold text-red-600 mt-1">{formatCurrency(totalAtrasado)}</p>
+          <p className="text-base md:text-xl font-bold text-red-600 mt-1 truncate">{formatCurrency(totalAtrasado)}</p>
         </div>
       </div>
 
