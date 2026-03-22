@@ -5,7 +5,7 @@ import { usePathname } from 'next/navigation'
 import { cn } from '@/lib/utils'
 import {
   LayoutDashboard, Users, Car, ArrowDownCircle, ArrowUpCircle,
-  FileBarChart, Settings, LogOut, ChevronLeft, Menu, Building2,
+  FileBarChart, Settings, LogOut, ChevronLeft, Menu, Building2, Wallet,
 } from 'lucide-react'
 import { useState } from 'react'
 import { signOut } from '@/app/(auth)/login/actions'
@@ -15,6 +15,7 @@ const NAV_ITEMS = [
   { href: '/gestor/motoristas',  label: 'Motoristas',      icon: Users },
   { href: '/gestor/veiculos',    label: 'Veículos',        icon: Car },
   { href: '/gestor/receitas',    label: 'Receitas',        icon: ArrowDownCircle },
+  { href: '/gestor/recebiveis',  label: 'Recebíveis',      icon: Wallet },
   { href: '/gestor/despesas',    label: 'Despesas',        icon: ArrowUpCircle },
   { href: '/gestor/empresa',     label: 'Gastos CNPJ',     icon: Building2 },
   { href: '/gestor/relatorios',  label: 'Relatórios',      icon: FileBarChart },

@@ -125,6 +125,9 @@ export default async function ReceitasPage({ searchParams }: { searchParams: { o
                       <div>
                         <p className="text-xs text-gray-400">Recebido</p>
                         <p className={`text-sm font-semibold ${ativo ? 'text-blue-600' : 'text-emerald-600'}`}>{formatCurrency(v.pago)}</p>
+                        {totalPago > 0 && (
+                          <p className="text-xs text-gray-400">{((v.pago / totalPago) * 100).toFixed(0)}% do total</p>
+                        )}
                       </div>
                       {v.pendente > 0 && (
                         <div>

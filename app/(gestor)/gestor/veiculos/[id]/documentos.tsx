@@ -37,7 +37,8 @@ export function DocumentosSection({ entidade, refId, documentos, label = 'Docume
     try {
       const supabase = createClient()
       const ext = file.name.split('.').pop()
-      const path = `${entidade}/${refId}/${Date.now()}-${file.name}`
+      const nomeSanitizado = file.name.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-zA-Z0-9.\-_]/g, '_')
+      const path = `${entidade}/${refId}/${Date.now()}-${nomeSanitizado}`
 
       const { error: uploadError } = await supabase.storage
         .from('documentos')
