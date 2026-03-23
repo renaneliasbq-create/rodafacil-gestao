@@ -138,13 +138,9 @@ export default async function RecebiveisPage({ searchParams }: { searchParams: {
                   <div className="hidden sm:grid grid-cols-4 gap-4 items-center px-5 py-3">
                     <p className="text-sm text-gray-600">{formatDate(s.data)}</p>
                     <p className="col-span-2 text-sm text-gray-900">{s.descricao ?? '—'}</p>
-                    <div className="flex items-center justify-end gap-3">
+                    <div className="flex items-center justify-end gap-2">
                       <p className="text-sm font-semibold text-red-600">{formatCurrency(Number(s.valor))}</p>
-                      <form action={async () => { 'use server'; await deletarSaque(s.id) }}>
-                        <button type="submit" className="p-1 text-gray-300 hover:text-red-500 hover:bg-red-50 rounded transition-colors" title="Excluir">
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </button>
-                      </form>
+                      <SaqueAcoes id={s.id} comprovanteUrl={s.comprovante_url ?? null} comprovantePath={s.comprovante_path ?? null} />
                     </div>
                   </div>
                 </div>
