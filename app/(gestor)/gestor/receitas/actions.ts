@@ -59,6 +59,24 @@ export async function deletarPagamento(id: string): Promise<void> {
   revalidatePath('/gestor/receitas')
 }
 
+export async function salvarComprovante(id: string, url: string, path: string): Promise<FormState> {
+  const supabase = createClient()
+  const { error } = await supabase.from('pagamentos').update({
+    comprovante_url: url,
+    comprovante_path: path,
+  }).eq('id', id)
+  if (error) return { error: 'Erro ao salvar comprovante.' }
+  revalidatePath('/gestor/receitas')
+  return null
+}
+
+export async function deletarComprovante(id: string, path: string): Promise<void> {
+  const supabase = createClient()
+  if (path) await supabase.storage.from('comprovantes').remove([path])
+  await supabase.from('pagamentos').update({ comprovante_url: null, comprovante_path: null }).eq('id', id)
+  revalidatePath('/gestor/receitas')
+}
+
 export async function editarPagamento(id: string, formData: FormData): Promise<FormState> {
   const schema = z.object({
     valor: z.coerce.number().positive('Valor inválido'),

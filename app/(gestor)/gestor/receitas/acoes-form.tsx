@@ -4,6 +4,7 @@ import { useState, useTransition } from 'react'
 import { Pencil, Trash2, Loader2, X } from 'lucide-react'
 import { deletarPagamento, editarPagamento } from './actions'
 import { formatCurrency } from '@/lib/utils'
+import { ComprovanteUpload } from './comprovante-upload'
 
 interface Pagamento {
   id: string
@@ -11,6 +12,8 @@ interface Pagamento {
   data_vencimento: string
   referencia: string | null
   status: string
+  comprovante_url?: string | null
+  comprovante_path?: string | null
 }
 
 export function AcoesReceita({ pagamento }: { pagamento: Pagamento }) {
@@ -45,6 +48,11 @@ export function AcoesReceita({ pagamento }: { pagamento: Pagamento }) {
     <>
       <div className="flex items-center justify-end gap-1">
         <p className="text-sm font-semibold text-gray-900">{formatCurrency(pagamento.valor)}</p>
+        <ComprovanteUpload
+          pagamentoId={pagamento.id}
+          comprovanteUrl={pagamento.comprovante_url ?? null}
+          comprovantePath={pagamento.comprovante_path ?? null}
+        />
         <button
           onClick={() => { setErro(null); setEditOpen(true) }}
           className="p-1.5 text-gray-300 hover:text-blue-500 hover:bg-blue-50 rounded-lg transition-colors"
