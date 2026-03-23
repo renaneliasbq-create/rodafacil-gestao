@@ -139,7 +139,7 @@ export default async function AlertasPage() {
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
               {[
                 { label: 'Vencidos',        count: qtdVencido,  classes: 'border-red-200 bg-red-50',      text: 'text-red-700',    dot: 'bg-red-500'    },
-                { label: 'Crítico (≤7d)',   count: qtdCritico,  classes: 'border-red-200 bg-red-50',      text: 'text-red-600',    dot: 'bg-red-400'    },
+                { label: 'Crítico (ate 7d)',  count: qtdCritico,  classes: 'border-red-200 bg-red-50',      text: 'text-red-600',    dot: 'bg-red-400'    },
                 { label: 'Urgente (8–15d)', count: qtdUrgente,  classes: 'border-orange-200 bg-orange-50', text: 'text-orange-700', dot: 'bg-orange-500' },
                 { label: 'Atenção (16–30d)',count: qtdAtencao,  classes: 'border-yellow-200 bg-yellow-50', text: 'text-yellow-700', dot: 'bg-yellow-500' },
               ].map(({ label, count, classes, text, dot }) => (
