@@ -3,9 +3,9 @@ export const dynamic = 'force-dynamic'
 import { unstable_noStore as noStore } from 'next/cache'
 import { createClient } from '@/lib/supabase/server'
 import { formatCurrency, formatDate } from '@/lib/utils'
-import { Wallet, TrendingDown, TrendingUp, CheckCircle2, Trash2, ArrowDownCircle } from 'lucide-react'
+import { Wallet, TrendingDown, TrendingUp, CheckCircle2, ArrowDownCircle } from 'lucide-react'
 import { NovoSaqueForm } from './novo-saque-form'
-import { deletarSaque } from './actions'
+import { SaqueAcoes } from './saque-acoes'
 
 export default async function RecebiveisPage({ searchParams }: { searchParams: { ok?: string } }) {
   noStore()
@@ -16,7 +16,7 @@ export default async function RecebiveisPage({ searchParams }: { searchParams: {
     { data: saques },
   ] = await Promise.all([
     supabase.from('pagamentos').select('valor, status, data_pagamento'),
-    supabase.from('saques').select('*').order('data', { ascending: false }),
+    supabase.from('saques').select('id, valor, data, descricao, comprovante_url, comprovante_path').order('data', { ascending: false }),
   ])
 
   const totalRecebido = (pagamentos ?? []).filter(p => p.status === 'pago').reduce((s, p) => s + Number(p.valor), 0)
@@ -132,11 +132,7 @@ export default async function RecebiveisPage({ searchParams }: { searchParams: {
                       <p className="text-sm font-semibold text-red-600">{formatCurrency(Number(s.valor))}</p>
                       <p className="text-xs text-gray-400">{formatDate(s.data)}{s.descricao ? ` · ${s.descricao}` : ''}</p>
                     </div>
-                    <form action={async () => { 'use server'; await deletarSaque(s.id) }}>
-                      <button type="submit" className="p-1.5 text-gray-300 hover:text-red-500 hover:bg-red-50 rounded transition-colors" title="Excluir">
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                    </form>
+                    <SaqueAcoes id={s.id} comprovanteUrl={s.comprovante_url ?? null} comprovantePath={s.comprovante_path ?? null} />
                   </div>
                   {/* Desktop */}
                   <div className="hidden sm:grid grid-cols-4 gap-4 items-center px-5 py-3">

@@ -28,6 +28,21 @@ export async function registrarSaque(_prev: FormState, formData: FormData): Prom
   return { success: true }
 }
 
+export async function salvarComprovanteSaque(id: string, url: string, path: string): Promise<FormState> {
+  const supabase = createClient()
+  const { error } = await supabase.from('saques').update({ comprovante_url: url, comprovante_path: path }).eq('id', id)
+  if (error) return { error: 'Erro ao salvar comprovante.' }
+  revalidatePath('/gestor/recebiveis')
+  return null
+}
+
+export async function deletarComprovanteSaque(id: string, path: string): Promise<void> {
+  const supabase = createClient()
+  if (path) await supabase.storage.from('comprovantes').remove([path])
+  await supabase.from('saques').update({ comprovante_url: null, comprovante_path: null }).eq('id', id)
+  revalidatePath('/gestor/recebiveis')
+}
+
 export async function deletarSaque(id: string): Promise<void> {
   const supabase = createClient()
   await supabase.from('saques').delete().eq('id', id)

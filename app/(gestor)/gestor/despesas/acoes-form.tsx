@@ -2,8 +2,9 @@
 
 import { useState, useTransition } from 'react'
 import { Pencil, Trash2, Loader2, X } from 'lucide-react'
-import { deletarDespesa, editarDespesa } from './actions'
+import { deletarDespesa, editarDespesa, salvarComprovanteDespesa, deletarComprovanteDespesa } from './actions'
 import { formatCurrency } from '@/lib/utils'
+import { ComprovanteUpload } from '@/components/gestor/comprovante-upload'
 
 interface Veiculo { id: string; placa: string; modelo: string }
 interface Motorista { id: string; nome: string }
@@ -16,6 +17,8 @@ interface Despesa {
   descricao: string | null
   veiculo_id: string | null
   motorista_id: string | null
+  comprovante_url?: string | null
+  comprovante_path?: string | null
 }
 
 const CATEGORIAS = [
@@ -65,6 +68,13 @@ export function AcoesDespesa({ despesa, veiculos, motoristas }: {
     <>
       <div className="flex items-center justify-end gap-0.5">
         <p className="text-sm font-semibold text-gray-900 mr-1">{formatCurrency(despesa.valor)}</p>
+        <ComprovanteUpload
+          registroId={despesa.id}
+          comprovanteUrl={despesa.comprovante_url ?? null}
+          comprovantePath={despesa.comprovante_path ?? null}
+          onSave={salvarComprovanteDespesa}
+          onDelete={deletarComprovanteDespesa}
+        />
         <button
           onClick={() => { setErro(null); setEditOpen(true) }}
           className="w-9 h-9 flex items-center justify-center text-gray-300 hover:text-blue-500 hover:bg-blue-50 rounded-lg transition-colors"

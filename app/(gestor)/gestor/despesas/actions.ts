@@ -37,6 +37,23 @@ export async function criarDespesa(_prev: FormState, formData: FormData): Promis
   return null
 }
 
+export async function salvarComprovanteDespesa(id: string, url: string, path: string): Promise<FormState> {
+  const supabase = createClient()
+  const { error } = await supabase.from('despesas').update({ comprovante_url: url, comprovante_path: path }).eq('id', id)
+  if (error) return { error: 'Erro ao salvar comprovante.' }
+  revalidatePath('/gestor/despesas')
+  revalidatePath('/gestor/empresa')
+  return null
+}
+
+export async function deletarComprovanteDespesa(id: string, path: string): Promise<void> {
+  const supabase = createClient()
+  if (path) await supabase.storage.from('comprovantes').remove([path])
+  await supabase.from('despesas').update({ comprovante_url: null, comprovante_path: null }).eq('id', id)
+  revalidatePath('/gestor/despesas')
+  revalidatePath('/gestor/empresa')
+}
+
 export async function deletarDespesa(id: string): Promise<void> {
   const supabase = createClient()
   await supabase.from('despesas').delete().eq('id', id)

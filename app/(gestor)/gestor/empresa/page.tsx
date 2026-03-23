@@ -6,6 +6,7 @@ import { Building2 } from 'lucide-react'
 import { NovoGastoCnpjForm } from './nova-form'
 import { DeleteGasto } from './delete-btn'
 import { EditarGasto } from './editar-gasto'
+import { ComprovanteBtnEmpresa } from './comprovante-btn'
 
 const LABEL: Record<string, string> = {
   'contador':            'Contador',
@@ -123,6 +124,7 @@ export default async function EmpresaPage() {
                         </div>
                         <div className="flex items-center gap-1 flex-shrink-0">
                           <p className="text-sm font-bold text-gray-900">{formatCurrency(g.valor)}</p>
+                          <ComprovanteBtnEmpresa id={g.id} comprovanteUrl={g.comprovante_url ?? null} comprovantePath={g.comprovante_path ?? null} />
                           <EditarGasto gasto={{ id: g.id, valor: g.valor, data: g.data, categoria: cat, descricao: desc }} />
                           <DeleteGasto id={g.id} />
                         </div>
