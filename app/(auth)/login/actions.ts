@@ -4,6 +4,46 @@ import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import { z } from 'zod'
 
+export type SignUpState = { error?: string } | null
+
+export async function signUpMotoApp(
+  _prevState: SignUpState,
+  formData: FormData
+): Promise<SignUpState> {
+  const nome     = (formData.get('nome')     as string)?.trim()
+  const email    = (formData.get('email')    as string)?.trim()
+  const password = formData.get('password')  as string
+  const confirm  = formData.get('confirm')   as string
+
+  if (!nome || nome.length < 2)      return { error: 'Informe seu nome completo.' }
+  if (!email)                        return { error: 'Informe um e-mail válido.' }
+  if (password.length < 6)           return { error: 'A senha deve ter no mínimo 6 caracteres.' }
+  if (password !== confirm)          return { error: 'As senhas não coincidem.' }
+
+  const supabase = createClient()
+
+  const { data: authData, error: signUpError } = await supabase.auth.signUp({ email, password })
+
+  if (signUpError) {
+    if (signUpError.message.includes('already registered')) {
+      return { error: 'Este e-mail já está cadastrado. Faça login.' }
+    }
+    return { error: 'Erro ao criar conta. Tente novamente.' }
+  }
+
+  if (!authData.user) return { error: 'Erro ao criar conta. Tente novamente.' }
+
+  // Garante que o perfil existe com tipo correto
+  await supabase.from('users').upsert({
+    id:    authData.user.id,
+    nome,
+    email,
+    tipo:  'motorista_app',
+  })
+
+  redirect('/motorista-app')
+}
+
 const loginSchema = z.object({
   email: z.string().email('E-mail inválido'),
   password: z.string().min(6, 'Senha deve ter no mínimo 6 caracteres'),
@@ -51,7 +91,11 @@ export async function signIn(
     .eq('id', user.id)
     .single()
 
-  const dest = profile?.tipo === 'gestor' ? '/gestor' : '/motorista'
+  const dest = profile?.tipo === 'gestor'
+    ? '/gestor'
+    : profile?.tipo === 'motorista_app'
+    ? '/motorista-app'
+    : '/motorista'
   redirect(dest)
 }
 

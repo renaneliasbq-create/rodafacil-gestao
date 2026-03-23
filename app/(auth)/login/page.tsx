@@ -26,35 +26,60 @@ export default function LoginPage({
         {/* Texto central */}
         <div>
           <h1 className="text-3xl font-extrabold text-white leading-snug mb-4">
-            Gestão completa<br />da sua frota
+            A gestão que você<br />precisava
           </h1>
-          <p className="text-blue-200 text-sm leading-relaxed">
-            Acompanhe pagamentos, manutenções, motoristas e muito mais em um único lugar.
+          <p className="text-blue-200 text-sm leading-relaxed mb-8">
+            Uma plataforma completa para donos de frota e motoristas independentes.
           </p>
 
-          {/* Feature list */}
-          <ul className="mt-8 space-y-3">
-            {[
-              'Controle de recebíveis por motorista',
-              'Histórico de manutenções da frota',
-              'Dashboard financeiro em tempo real',
-              'Gestão de multas e despesas',
-            ].map((item) => (
-              <li key={item} className="flex items-center gap-3 text-sm text-blue-100">
-                <div className="w-5 h-5 bg-white/20 rounded-full flex items-center justify-center flex-shrink-0">
-                  <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
-                  </svg>
-                </div>
-                {item}
-              </li>
-            ))}
-          </ul>
+          {/* Para donos de frota */}
+          <div className="mb-6">
+            <p className="text-xs font-bold text-blue-300 uppercase tracking-widest mb-3">Para donos de frota</p>
+            <ul className="space-y-2">
+              {[
+                'Dashboard financeiro em tempo real',
+                'Controle de receitas e inadimplência',
+                'Payback e rentabilidade por veículo',
+                'Alertas de vencimento de documentos',
+              ].map(item => (
+                <li key={item} className="flex items-center gap-3 text-sm text-blue-100">
+                  <div className="w-4 h-4 bg-white/20 rounded-full flex items-center justify-center flex-shrink-0">
+                    <svg className="w-2.5 h-2.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                    </svg>
+                  </div>
+                  {item}
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          {/* Para motoristas */}
+          <div>
+            <p className="text-xs font-bold text-emerald-300 uppercase tracking-widest mb-3">Para motoristas</p>
+            <ul className="space-y-2">
+              {[
+                'Lucro real por plataforma (Uber, 99, iFood)',
+                'Controle de ganhos, despesas e KM',
+                'Calculadora de ganho por hora e por km',
+                'Alertas de CNH, CRLV e revisão',
+              ].map(item => (
+                <li key={item} className="flex items-center gap-3 text-sm text-blue-100">
+                  <div className="w-4 h-4 bg-emerald-400/30 rounded-full flex items-center justify-center flex-shrink-0">
+                    <svg className="w-2.5 h-2.5 text-emerald-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                    </svg>
+                  </div>
+                  {item}
+                </li>
+              ))}
+            </ul>
+          </div>
         </div>
 
         {/* Footer */}
         <p className="text-blue-300/50 text-xs">
-          © 2024 RodaFácil · Santa Catarina, SC
+          © 2025 RodaFácil SC · Santa Catarina, SC
         </p>
       </div>
 
@@ -69,18 +94,11 @@ export default function LoginPage({
             </svg>
           </div>
           <span className="font-extrabold text-lg text-blue-900">
-            Roda<span className="text-blue-600">Fácil</span>
+            Roda<span className="text-blue-600">Fácil</span><span className="text-blue-400 text-sm font-bold ml-0.5">SC</span>
           </span>
         </div>
 
-        <div className="mb-8">
-          <h2 className="text-2xl font-extrabold text-gray-900">Entrar</h2>
-          <p className="text-gray-400 text-sm mt-1">
-            Acesse o painel de gerenciamento
-          </p>
-        </div>
-
-        {/* Erro de URL (ex: sessão expirada) */}
+        {/* Erro de sessão */}
         {searchParams.error && (
           <div className="mb-6 flex items-center gap-2 rounded-lg bg-red-50 border border-red-100 px-4 py-3 text-sm text-red-600">
             <svg className="w-4 h-4 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
@@ -91,10 +109,6 @@ export default function LoginPage({
         )}
 
         <LoginForm />
-
-        <p className="mt-8 text-center text-xs text-gray-300">
-          Não tem acesso? Entre em contato com o administrador.
-        </p>
       </div>
     </div>
   )
