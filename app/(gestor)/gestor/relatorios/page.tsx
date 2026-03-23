@@ -85,8 +85,9 @@ export default async function RelatoriosPage({ searchParams }: { searchParams: R
     const meses: { ano: number; mes: number; ini: string; fim: string; label: string }[] = []
     const [anoIni, mesIni] = ini.split('-').map(Number)
     const [anoFim, mesFim] = fim.split('-').map(Number)
-    let a = anoIni, m = mesIni
-    while (a < anoFim || (a === anoFim && m <= mesFim)) {
+    // Gera do mais recente ao mais antigo (decrescente)
+    let a = anoFim, m = mesFim
+    while (a > anoIni || (a === anoIni && m >= mesIni)) {
       const mesStr = String(m).padStart(2, '0')
       const ultimoDia = new Date(a, m, 0).getDate()
       meses.push({
@@ -95,8 +96,8 @@ export default async function RelatoriosPage({ searchParams }: { searchParams: R
         fim: `${a}-${mesStr}-${ultimoDia}`,
         label: `${MESES[m - 1]}${a !== ano ? ` ${a}` : ''}`,
       })
-      m++
-      if (m > 12) { m = 1; a++ }
+      m--
+      if (m < 1) { m = 12; a-- }
     }
     return meses
   }
@@ -114,7 +115,7 @@ export default async function RelatoriosPage({ searchParams }: { searchParams: R
       ?.filter(r => r.data >= ini_ && r.data <= fim_)
       .reduce((s, r) => s + r.valor, 0) ?? 0
     return { mes: label, receita, despesa, retirada, lucro: receita - despesa }
-  }).reverse()
+  })
 
   const totalReceita  = resumoMensal.reduce((s, r) => s + r.receita, 0)
   const totalDespesa  = resumoMensal.reduce((s, r) => s + r.despesa, 0)
