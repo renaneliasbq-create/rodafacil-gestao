@@ -33,14 +33,14 @@ export default function AppleIcon() {
         </span>
         <span
           style={{
-            color: 'rgba(255,255,255,0.7)',
-            fontSize: 18,
-            fontWeight: 500,
-            letterSpacing: 2,
+            color: 'rgba(255,255,255,0.8)',
+            fontSize: 32,
+            fontWeight: 700,
+            letterSpacing: 4,
             fontFamily: 'sans-serif',
           }}
         >
-          RODA FÁCIL
+          SC
         </span>
       </div>
     ),
