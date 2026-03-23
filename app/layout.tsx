@@ -5,6 +5,10 @@ import { Toaster } from 'sonner'
 export const metadata: Metadata = {
   title: 'RodaFácil — Gestão',
   description: 'Painel de gestão RodaFácil',
+  icons: {
+    icon: '/icon',
+    apple: '/apple-icon',
+  },
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
