@@ -35,7 +35,10 @@ export async function middleware(request: NextRequest) {
         .eq('id', user.id)
         .single()
 
-      const dest = profile?.tipo === 'gestor' ? '/gestor' : '/motorista'
+      const dest =
+        profile?.tipo === 'gestor'        ? '/gestor'
+      : profile?.tipo === 'motorista_app' ? '/motorista-app'
+      : '/motorista'
       return NextResponse.redirect(new URL(dest, request.url))
     }
     return supabaseResponse
@@ -54,7 +57,12 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL('/motorista', request.url))
   }
 
-  if (pathname.startsWith('/motorista') && profile?.tipo !== 'motorista') {
+  if (pathname.startsWith('/motorista-app') && profile?.tipo !== 'motorista_app') {
+    const dest = profile?.tipo === 'gestor' ? '/gestor' : '/login'
+    return NextResponse.redirect(new URL(dest, request.url))
+  }
+
+  if (pathname.startsWith('/motorista') && !pathname.startsWith('/motorista-app') && profile?.tipo !== 'motorista') {
     return NextResponse.redirect(new URL('/gestor', request.url))
   }
 
