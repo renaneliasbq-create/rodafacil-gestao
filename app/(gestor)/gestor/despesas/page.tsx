@@ -29,6 +29,7 @@ export default async function DespesasPage({ searchParams }: { searchParams: Rec
   noStore()
   const supabase = createClient()
   const selectedVeiculo = searchParams.v ?? null
+  const selectedCategoria = searchParams.cat ?? null
 
   const [
     { data: despesas },
@@ -63,10 +64,12 @@ export default async function DespesasPage({ searchParams }: { searchParams: Rec
     return acc
   }, {} as Record<string, number>)
 
-  // Lista filtrada por veículo (somente os 50 para exibição)
-  const despesasFiltradas = selectedVeiculo
-    ? (despesas ?? []).filter(d => d.veiculo_id === selectedVeiculo)
-    : (despesas ?? [])
+  // Lista filtrada por veículo e/ou categoria
+  const despesasFiltradas = (despesas ?? []).filter(d => {
+    if (selectedVeiculo && d.veiculo_id !== selectedVeiculo) return false
+    if (selectedCategoria && d.categoria !== selectedCategoria) return false
+    return true
+  })
 
   // Totais por veículo — usa todas as despesas para valores corretos
   const porVeiculo: Record<string, { placa: string; modelo: string; total: number }> = {}
@@ -99,21 +102,48 @@ export default async function DespesasPage({ searchParams }: { searchParams: Rec
       {/* Resumo por categoria — todas */}
       {Object.keys(porCategoria).length > 0 && (
         <div className="card p-5">
-          <h2 className="font-semibold text-gray-900 mb-3 text-sm">Por categoria</h2>
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="font-semibold text-gray-900 text-sm">Por categoria</h2>
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-gray-400">Clique para filtrar</span>
+              {selectedCategoria && (
+                <Link
+                  href={selectedVeiculo ? `/gestor/despesas?v=${selectedVeiculo}` : '/gestor/despesas'}
+                  className="flex items-center gap-1 text-xs text-blue-600 hover:text-blue-700 font-medium"
+                >
+                  <X className="w-3 h-3" /> Limpar
+                </Link>
+              )}
+            </div>
+          </div>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             {(Object.entries(porCategoria) as [string, number][])
               .sort((a, b) => b[1] - a[1])
-              .map(([cat, val]) => (
-                <div key={cat} className="bg-gray-50 rounded-xl p-3">
-                  <span className={`badge text-xs ${CATEGORIA_COLORS[cat] ?? 'bg-gray-100 text-gray-500'}`}>
-                    {CATEGORIA_LABELS[cat] ?? cat}
-                  </span>
-                  <p className="text-base font-bold text-gray-900 mt-2">{formatCurrency(val)}</p>
-                  <p className="text-xs text-gray-400 mt-0.5">
-                    {totalGeral > 0 ? ((val / totalGeral) * 100).toFixed(0) : 0}% do total
-                  </p>
-                </div>
-              ))}
+              .map(([cat, val]) => {
+                const ativo = selectedCategoria === cat
+                const href = ativo
+                  ? (selectedVeiculo ? `/gestor/despesas?v=${selectedVeiculo}` : '/gestor/despesas')
+                  : (selectedVeiculo ? `/gestor/despesas?v=${selectedVeiculo}&cat=${cat}` : `/gestor/despesas?cat=${cat}`)
+                return (
+                  <Link
+                    key={cat}
+                    href={href}
+                    className={`rounded-xl p-3 transition-colors ${
+                      ativo
+                        ? 'bg-blue-50 border border-blue-200'
+                        : 'bg-gray-50 hover:bg-gray-100'
+                    }`}
+                  >
+                    <span className={`badge text-xs ${CATEGORIA_COLORS[cat] ?? 'bg-gray-100 text-gray-500'}`}>
+                      {CATEGORIA_LABELS[cat] ?? cat}
+                    </span>
+                    <p className={`text-base font-bold mt-2 ${ativo ? 'text-blue-700' : 'text-gray-900'}`}>{formatCurrency(val)}</p>
+                    <p className="text-xs text-gray-400 mt-0.5">
+                      {totalGeral > 0 ? ((val / totalGeral) * 100).toFixed(0) : 0}% do total
+                    </p>
+                  </Link>
+                )
+              })}
           </div>
         </div>
       )}
@@ -169,12 +199,16 @@ export default async function DespesasPage({ searchParams }: { searchParams: Rec
       {(() => {
         const lista = despesasFiltradas
         const veiculoFiltrado = selectedVeiculo ? veiculoById[selectedVeiculo] : null
+        const tituloLista = [
+          veiculoFiltrado ? veiculoFiltrado.placa : null,
+          selectedCategoria ? CATEGORIA_LABELS[selectedCategoria] ?? selectedCategoria : null,
+        ].filter(Boolean).join(' · ')
         return (
       <div className="card">
         <div className="flex items-center gap-2 p-5 border-b border-gray-100">
           <ArrowUpCircle className="w-4 h-4 text-gray-400" />
           <h2 className="font-semibold text-gray-900">
-            {veiculoFiltrado ? `Despesas · ${veiculoFiltrado.placa}` : 'Todas as despesas'}
+            {tituloLista ? `Despesas · ${tituloLista}` : 'Todas as despesas'}
           </h2>
           <span className="ml-auto text-xs text-gray-400">{lista.length} registros</span>
         </div>
@@ -241,7 +275,7 @@ export default async function DespesasPage({ searchParams }: { searchParams: Rec
           <div className="py-14 text-center">
             <ArrowUpCircle className="w-8 h-8 text-gray-200 mx-auto mb-3" />
             <p className="text-sm text-gray-400">
-              {veiculoFiltrado ? `Nenhuma despesa para ${veiculoFiltrado.placa}` : 'Nenhuma despesa registrada'}
+              {tituloLista ? `Nenhuma despesa para ${tituloLista}` : 'Nenhuma despesa registrada'}
             </p>
           </div>
         )}
