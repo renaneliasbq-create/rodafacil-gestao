@@ -6,7 +6,7 @@ import { cn } from '@/lib/utils'
 import {
   LayoutDashboard, Users, Car, ArrowDownCircle, ArrowUpCircle,
   FileBarChart, Settings, LogOut, ChevronLeft, Building2, Wallet,
-  MoreHorizontal, X, AlertTriangle,
+  MoreHorizontal, X, AlertTriangle, Bell,
 } from 'lucide-react'
 import { useState } from 'react'
 import { signOut } from '@/app/(auth)/login/actions'
@@ -21,6 +21,7 @@ const NAV_ITEMS = [
   { href: '/gestor/despesas',         label: 'Despesas',       icon: ArrowUpCircle },
   { href: '/gestor/empresa',          label: 'Gastos CNPJ',    icon: Building2 },
   { href: '/gestor/inadimplencia',    label: 'Inadimplência',  icon: AlertTriangle },
+  { href: '/gestor/alertas',          label: 'Vencimentos',    icon: Bell },
   { href: '/gestor/relatorios',       label: 'Relatórios',     icon: FileBarChart },
   { href: '/gestor/configuracoes',    label: 'Configurações',  icon: Settings },
 ]
@@ -39,6 +40,7 @@ const MAIS_ITEMS = [
   { href: '/gestor/despesas',       label: 'Despesas',      icon: ArrowUpCircle },
   { href: '/gestor/empresa',        label: 'Gastos CNPJ',   icon: Building2 },
   { href: '/gestor/inadimplencia',  label: 'Inadimplência', icon: AlertTriangle },
+  { href: '/gestor/alertas',        label: 'Vencimentos',   icon: Bell },
   { href: '/gestor/relatorios',     label: 'Relatórios',    icon: FileBarChart },
   { href: '/gestor/configuracoes',  label: 'Configurações', icon: Settings },
 ]
