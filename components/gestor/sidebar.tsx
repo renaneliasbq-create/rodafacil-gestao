@@ -6,22 +6,23 @@ import { cn } from '@/lib/utils'
 import {
   LayoutDashboard, Users, Car, ArrowDownCircle, ArrowUpCircle,
   FileBarChart, Settings, LogOut, ChevronLeft, Building2, Wallet,
-  MoreHorizontal, X,
+  MoreHorizontal, X, AlertTriangle,
 } from 'lucide-react'
 import { useState } from 'react'
 import { signOut } from '@/app/(auth)/login/actions'
 
 // Itens do menu lateral desktop (todos)
 const NAV_ITEMS = [
-  { href: '/gestor',             label: 'Dashboard',       icon: LayoutDashboard },
-  { href: '/gestor/motoristas',  label: 'Motoristas',      icon: Users },
-  { href: '/gestor/veiculos',    label: 'Veículos',        icon: Car },
-  { href: '/gestor/receitas',    label: 'Receitas',        icon: ArrowDownCircle },
-  { href: '/gestor/recebiveis',  label: 'Recebíveis',      icon: Wallet },
-  { href: '/gestor/despesas',    label: 'Despesas',        icon: ArrowUpCircle },
-  { href: '/gestor/empresa',     label: 'Gastos CNPJ',     icon: Building2 },
-  { href: '/gestor/relatorios',  label: 'Relatórios',      icon: FileBarChart },
-  { href: '/gestor/configuracoes', label: 'Configurações', icon: Settings },
+  { href: '/gestor',                  label: 'Dashboard',      icon: LayoutDashboard },
+  { href: '/gestor/motoristas',       label: 'Motoristas',     icon: Users },
+  { href: '/gestor/veiculos',         label: 'Veículos',       icon: Car },
+  { href: '/gestor/receitas',         label: 'Receitas',       icon: ArrowDownCircle },
+  { href: '/gestor/recebiveis',       label: 'Recebíveis',     icon: Wallet },
+  { href: '/gestor/despesas',         label: 'Despesas',       icon: ArrowUpCircle },
+  { href: '/gestor/empresa',          label: 'Gastos CNPJ',    icon: Building2 },
+  { href: '/gestor/inadimplencia',    label: 'Inadimplência',  icon: AlertTriangle },
+  { href: '/gestor/relatorios',       label: 'Relatórios',     icon: FileBarChart },
+  { href: '/gestor/configuracoes',    label: 'Configurações',  icon: Settings },
 ]
 
 // 4 itens principais na bottom nav
@@ -34,11 +35,12 @@ const BOTTOM_NAV_ITEMS = [
 
 // Itens secundários que ficam no drawer "Mais"
 const MAIS_ITEMS = [
-  { href: '/gestor/recebiveis',    label: 'Recebíveis',    icon: Wallet },
-  { href: '/gestor/despesas',      label: 'Despesas',      icon: ArrowUpCircle },
-  { href: '/gestor/empresa',       label: 'Gastos CNPJ',   icon: Building2 },
-  { href: '/gestor/relatorios',    label: 'Relatórios',    icon: FileBarChart },
-  { href: '/gestor/configuracoes', label: 'Configurações', icon: Settings },
+  { href: '/gestor/recebiveis',     label: 'Recebíveis',    icon: Wallet },
+  { href: '/gestor/despesas',       label: 'Despesas',      icon: ArrowUpCircle },
+  { href: '/gestor/empresa',        label: 'Gastos CNPJ',   icon: Building2 },
+  { href: '/gestor/inadimplencia',  label: 'Inadimplência', icon: AlertTriangle },
+  { href: '/gestor/relatorios',     label: 'Relatórios',    icon: FileBarChart },
+  { href: '/gestor/configuracoes',  label: 'Configurações', icon: Settings },
 ]
 
 interface SidebarProps {
