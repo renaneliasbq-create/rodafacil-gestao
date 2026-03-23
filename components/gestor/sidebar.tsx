@@ -75,7 +75,7 @@ export function GestorSidebar({ userName }: SidebarProps) {
           </div>
           {!collapsed && (
             <span className="font-extrabold text-white text-base tracking-tight">
-              Roda<span className="text-blue-400">Fácil</span>
+              Roda<span className="text-blue-400">Fácil</span><span className="text-blue-300 text-sm font-bold ml-0.5">SC</span>
             </span>
           )}
         </div>

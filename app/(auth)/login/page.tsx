@@ -19,7 +19,7 @@ export default function LoginPage({
             </svg>
           </div>
           <span className="text-white font-extrabold text-xl tracking-tight">
-            Roda<span className="text-blue-300">Fácil</span>
+            Roda<span className="text-blue-300">Fácil</span><span className="text-blue-200 text-base font-bold ml-0.5">SC</span>
           </span>
         </div>
 

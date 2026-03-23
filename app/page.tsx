@@ -113,7 +113,7 @@ export default function LandingPage() {
                 <CarSvg className="w-4 h-4 text-white" />
               </div>
               <span className={`text-lg font-extrabold tracking-tight ${scrolled ? 'text-gray-900' : 'text-white'}`}>
-                Roda<span className="text-blue-400">Fácil</span>
+                Roda<span className="text-blue-400">Fácil</span><span className="text-blue-300 font-bold ml-0.5">SC</span>
               </span>
             </a>
 
@@ -572,7 +572,7 @@ export default function LandingPage() {
                 <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
                   <CarSvg className="w-4 h-4 text-white" />
                 </div>
-                <span className="text-lg font-extrabold tracking-tight">Roda<span className="text-blue-400">Fácil</span></span>
+                <span className="text-lg font-extrabold tracking-tight">Roda<span className="text-blue-400">Fácil</span><span className="text-blue-300 font-bold ml-0.5">SC</span></span>
               </div>
               <p className="text-white/50 text-sm leading-relaxed max-w-xs">A solução mais simples para motoristas de aplicativo que querem gerar renda extra com praticidade e segurança.</p>
             </div>

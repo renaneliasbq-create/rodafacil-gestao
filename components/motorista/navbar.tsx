@@ -43,7 +43,7 @@ export function MotoristaNavbar({ userName }: NavbarProps) {
                 </svg>
               </div>
               <span className="font-extrabold text-blue-900 text-sm">
-                Roda<span className="text-blue-600">Fácil</span>
+                Roda<span className="text-blue-600">Fácil</span><span className="text-blue-400 text-xs font-bold ml-0.5">SC</span>
               </span>
             </div>
 
