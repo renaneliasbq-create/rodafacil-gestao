@@ -65,7 +65,7 @@ export function GestorSidebar({ userName }: SidebarProps) {
     <>
       {/* ── Desktop sidebar ─────────────────────────────── */}
       <aside className={cn(
-        'hidden lg:flex flex-col h-screen bg-sidebar-bg sticky top-0 transition-all duration-200 flex-shrink-0',
+        'hidden lg:flex flex-col h-screen bg-sidebar-bg sticky top-0 transition-all duration-200 flex-shrink-0 print:hidden',
         collapsed ? 'w-16' : 'w-60'
       )}>
         {/* Logo */}
@@ -138,7 +138,7 @@ export function GestorSidebar({ userName }: SidebarProps) {
       </aside>
 
       {/* ── Mobile: bottom navigation bar ───────────────── */}
-      <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-40 h-16 bg-sidebar-bg border-t border-sidebar-border flex items-stretch safe-area-bottom">
+      <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-40 h-16 bg-sidebar-bg border-t border-sidebar-border flex items-stretch safe-area-bottom print:hidden">
         {BOTTOM_NAV_ITEMS.map(({ href, label, icon: Icon }) => (
           <Link
             key={href}

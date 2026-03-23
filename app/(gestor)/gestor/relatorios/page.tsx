@@ -4,9 +4,10 @@ import { unstable_noStore as noStore } from 'next/cache'
 import { Suspense } from 'react'
 import { createClient } from '@/lib/supabase/server'
 import { formatCurrency, formatDate, MESES } from '@/lib/utils'
-import { FileBarChart, TrendingUp } from 'lucide-react'
+import { FileBarChart, TrendingUp, FileText } from 'lucide-react'
 import { ExportCSV } from './export-csv'
 import { FiltroPeriodo } from './filtro-periodo'
+import Link from 'next/link'
 
 export default async function RelatoriosPage({ searchParams }: { searchParams: Record<string, string | undefined> }) {
   noStore()
@@ -173,6 +174,14 @@ export default async function RelatoriosPage({ searchParams }: { searchParams: R
           <p className="text-gray-500 text-sm mt-0.5">{periodoLabel}</p>
         </div>
         <div className="flex gap-2 flex-wrap justify-end">
+          <Link
+            href={`/gestor/relatorios/dre?p=${p}`}
+            className="flex items-center gap-2 px-4 py-2 bg-gray-800 hover:bg-gray-900 text-white text-sm font-semibold rounded-xl transition-colors"
+          >
+            <FileText className="w-4 h-4" />
+            <span className="hidden sm:inline">Abrir DRE</span>
+            <span className="sm:hidden">DRE</span>
+          </Link>
           <ExportCSV
             label="Pagamentos"
             filename={`pagamentos_${ano}.csv`}
