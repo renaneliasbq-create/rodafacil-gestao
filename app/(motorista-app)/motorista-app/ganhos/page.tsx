@@ -87,16 +87,18 @@ export default async function GanhosPage({
               <p className="text-emerald-100 text-[10px] font-medium">Por hora</p>
               <p className="text-white font-bold text-sm">{ganhoPorHora > 0 ? fmt(ganhoPorHora) : '—'}</p>
             </div>
-            <div className="bg-white/15 rounded-xl px-2 py-2 text-center">
-              <p className="text-emerald-100 text-[10px] font-medium">Taxa média</p>
-              <p className="text-white font-bold text-sm">{taxaMedia > 0 ? `${taxaMedia.toFixed(1)}%` : '—'}</p>
+            <div className="flex flex-col gap-1">
+              <div className="bg-white/15 rounded-xl px-2 py-2 text-center">
+                <p className="text-emerald-100 text-[10px] font-medium">Taxa média</p>
+                <p className="text-white font-bold text-sm">{taxaMedia > 0 ? `${taxaMedia.toFixed(1)}%` : '—'}</p>
+              </div>
+              {taxaMedia > 0 && (
+                <p className="text-emerald-100/70 text-[10px] text-center leading-snug">
+                  % do bruto retida pelas plataformas. Quanto menor, melhor.
+                </p>
+              )}
             </div>
           </div>
-          {taxaMedia > 0 && (
-            <p className="text-emerald-100/70 text-[10px] mt-2 text-center leading-snug">
-              Taxa média: % do bruto retida pelas plataformas. Quanto menor, mais você ficou do que rodou.
-            </p>
-          )}
         </div>
       </div>
 
