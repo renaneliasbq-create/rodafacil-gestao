@@ -22,7 +22,11 @@ export async function signUpMotoApp(
 
   const supabase = createClient()
 
-  const { data: authData, error: signUpError } = await supabase.auth.signUp({ email, password })
+  const { data: authData, error: signUpError } = await supabase.auth.signUp({
+    email,
+    password,
+    options: { data: { nome, tipo: 'motorista_app' } },
+  })
 
   if (signUpError) {
     if (signUpError.message.includes('already registered')) {
