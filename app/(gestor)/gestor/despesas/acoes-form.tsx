@@ -5,6 +5,7 @@ import { Pencil, Trash2, Loader2, X } from 'lucide-react'
 import { deletarDespesa, editarDespesa, salvarComprovanteDespesa, deletarComprovanteDespesa } from './actions'
 import { formatCurrency } from '@/lib/utils'
 import { ComprovanteUpload } from '@/components/gestor/comprovante-upload'
+import { ParcelasButton, type Parcela } from './parcelas-modal'
 
 interface Veiculo { id: string; placa: string; modelo: string }
 interface Motorista { id: string; nome: string }
@@ -32,10 +33,12 @@ const CATEGORIAS = [
   { value: 'outro', label: 'Outro' },
 ]
 
-export function AcoesDespesa({ despesa, veiculos, motoristas }: {
+export function AcoesDespesa({ despesa, veiculos, motoristas, parcelas, motoristaNome }: {
   despesa: Despesa
   veiculos: Veiculo[]
   motoristas: Motorista[]
+  parcelas?: Parcela[]
+  motoristaNome?: string | null
 }) {
   const [editOpen, setEditOpen] = useState(false)
   const [erro, setErro] = useState<string | null>(null)
@@ -66,8 +69,18 @@ export function AcoesDespesa({ despesa, veiculos, motoristas }: {
 
   return (
     <>
-      <div className="flex items-center justify-end gap-0.5">
-        <p className="text-sm font-semibold text-gray-900 mr-1">{formatCurrency(despesa.valor)}</p>
+      <div className="flex items-center justify-end gap-0.5 flex-wrap">
+        {despesa.categoria === 'multa' && parcelas && parcelas.length > 0 && (
+          <ParcelasButton
+            despesaId={despesa.id}
+            descricao={despesa.descricao}
+            valor={despesa.valor}
+            data={despesa.data}
+            motoristaNome={motoristaNome ?? null}
+            parcelas={parcelas}
+          />
+        )}
+        <p className="text-sm font-semibold text-gray-900 mr-1 ml-1">{formatCurrency(despesa.valor)}</p>
         <ComprovanteUpload
           registroId={despesa.id}
           comprovanteUrl={despesa.comprovante_url ?? null}

@@ -53,6 +53,17 @@ export default async function DespesasPage({ searchParams }: { searchParams: Rec
   const veiculoById = Object.fromEntries((veiculos ?? []).map(v => [v.id, v]))
   const motoristaById = Object.fromEntries((motoristas ?? []).map(m => [m.id, m]))
 
+  // Parcelas de multas
+  const multaIds = (despesas ?? []).filter(d => d.categoria === 'multa').map(d => d.id)
+  const { data: parcelasRaw } = multaIds.length > 0
+    ? await supabase.from('multa_parcelas').select('*').in('despesa_id', multaIds).order('numero')
+    : { data: [] }
+  const parcelasPorDespesa: Record<string, typeof parcelasRaw> = {}
+  for (const p of parcelasRaw ?? []) {
+    if (!parcelasPorDespesa[p.despesa_id]) parcelasPorDespesa[p.despesa_id] = []
+    parcelasPorDespesa[p.despesa_id]!.push(p)
+  }
+
   // Totais calculados sobre TODAS as despesas (sem limite de 50)
   const todasParaTotais = selectedVeiculo
     ? (todasDespesasTotais ?? []).filter(d => d.veiculo_id === selectedVeiculo)
@@ -242,7 +253,13 @@ export default async function DespesasPage({ searchParams }: { searchParams: Rec
                           </p>
                         </div>
                         <div className="flex flex-col items-end gap-1 flex-shrink-0">
-                          <AcoesDespesa despesa={d} veiculos={veiculos ?? []} motoristas={motoristas ?? []} />
+                          <AcoesDespesa
+                            despesa={d}
+                            veiculos={veiculos ?? []}
+                            motoristas={motoristas ?? []}
+                            parcelas={parcelasPorDespesa[d.id] ?? undefined}
+                            motoristaNome={m?.nome ?? null}
+                          />
                         </div>
                       </div>
                     </div>
@@ -264,6 +281,8 @@ export default async function DespesasPage({ searchParams }: { searchParams: Rec
                         despesa={d}
                         veiculos={veiculos ?? []}
                         motoristas={motoristas ?? []}
+                        parcelas={parcelasPorDespesa[d.id] ?? undefined}
+                        motoristaNome={m?.nome ?? null}
                       />
                     </div>
                   </div>
