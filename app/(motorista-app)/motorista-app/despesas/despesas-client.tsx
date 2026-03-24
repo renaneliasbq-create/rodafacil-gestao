@@ -3,27 +3,10 @@
 import { useState, useTransition, useRef, useEffect } from 'react'
 import { useFormState, useFormStatus } from 'react-dom'
 import { registrarDespesa, deletarDespesa, type DespesaState } from './actions'
-import { Plus, X, Loader2, Trash2, ChevronDown, Fuel, Wrench, Sparkles, Shield, FileText, Coffee, Smartphone, HelpCircle } from 'lucide-react'
+import { Plus, X, Loader2, Trash2, ChevronDown } from 'lucide-react'
+import { CATEGORIAS, getCat, fmt } from './despesas-shared'
 
-// ── Categorias ──────────────────────────────────────────────────
-export const CATEGORIAS = [
-  { nome: 'Combustível',       icon: Fuel,         bg: 'bg-orange-100', text: 'text-orange-600',  badge: 'bg-orange-100 text-orange-700' },
-  { nome: 'Manutenção',        icon: Wrench,        bg: 'bg-blue-100',   text: 'text-blue-600',    badge: 'bg-blue-100 text-blue-700' },
-  { nome: 'Lavagem',           icon: Sparkles,      bg: 'bg-cyan-100',   text: 'text-cyan-600',    badge: 'bg-cyan-100 text-cyan-700' },
-  { nome: 'Seguro',            icon: Shield,        bg: 'bg-purple-100', text: 'text-purple-600',  badge: 'bg-purple-100 text-purple-700' },
-  { nome: 'IPVA / Docs',       icon: FileText,      bg: 'bg-yellow-100', text: 'text-yellow-600',  badge: 'bg-yellow-100 text-yellow-700' },
-  { nome: 'Alimentação',       icon: Coffee,        bg: 'bg-amber-100',  text: 'text-amber-600',   badge: 'bg-amber-100 text-amber-700' },
-  { nome: 'Aplicativo',        icon: Smartphone,    bg: 'bg-indigo-100', text: 'text-indigo-600',  badge: 'bg-indigo-100 text-indigo-700' },
-  { nome: 'Outros',            icon: HelpCircle,    bg: 'bg-gray-100',   text: 'text-gray-500',    badge: 'bg-gray-100 text-gray-600' },
-]
-
-export function getCat(nome: string) {
-  return CATEGORIAS.find(c => c.nome === nome) ?? CATEGORIAS[CATEGORIAS.length - 1]
-}
-
-export function fmt(v: number) {
-  return v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
-}
+export { CATEGORIAS, getCat, fmt }
 
 // ── Botão submit ─────────────────────────────────────────────────
 function BtnSubmit() {
@@ -42,7 +25,7 @@ function BtnSubmit() {
 // ── Modal de registro ────────────────────────────────────────────
 function ModalDespesa({ onClose }: { onClose: () => void }) {
   const [state, formAction] = useFormState<DespesaState, FormData>(registrarDespesa, null)
-  const [categoria, setCategoria] = useState('Combustível')
+  const [categoria, setCategoria] = useState('combustivel')
   const formRef = useRef<HTMLFormElement>(null)
   useEffect(() => {
     if (state?.success) onClose()
@@ -77,12 +60,12 @@ function ModalDespesa({ onClose }: { onClose: () => void }) {
             <div className="grid grid-cols-4 gap-2">
               {CATEGORIAS.map(cat => {
                 const Icon = cat.icon
-                const ativo = categoria === cat.nome
+                const ativo = categoria === cat.valor
                 return (
                   <button
-                    key={cat.nome}
+                    key={cat.valor}
                     type="button"
-                    onClick={() => setCategoria(cat.nome)}
+                    onClick={() => setCategoria(cat.valor)}
                     className={`flex flex-col items-center gap-1 py-2.5 rounded-xl border-2 transition-all ${
                       ativo
                         ? 'border-red-400 bg-red-50'
@@ -197,7 +180,7 @@ export function FiltroCategoria({
         className="flex items-center gap-1.5 px-3 py-2 rounded-xl border border-gray-200 text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors"
       >
         {catAtual ? (
-          <span className={`text-[11px] font-bold px-2 py-0.5 rounded-full mr-1 ${catAtual.badge}`}>{atual}</span>
+          <span className={`text-[11px] font-bold px-2 py-0.5 rounded-full mr-1 ${catAtual.badge}`}>{catAtual.nome}</span>
         ) : (
           <span>Todas</span>
         )}
@@ -220,7 +203,7 @@ export function FiltroCategoria({
                 onClick={() => navegar(c)}
                 className={`w-full text-left px-4 py-2 text-sm transition-colors ${atual === c ? 'text-red-600 font-semibold bg-red-50' : 'text-gray-700 hover:bg-gray-50'}`}
               >
-                {c}
+                {getCat(c).nome}
               </button>
             ))}
           </div>

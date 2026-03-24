@@ -32,7 +32,7 @@ export async function registrarDespesa(
     valor,
   })
 
-  if (error) return { error: `DBG: ${error.message} | code=${error.code}` }
+  if (error) return { error: 'Erro ao salvar. Tente novamente.' }
 
   revalidatePath('/motorista-app/despesas')
   revalidatePath('/motorista-app')

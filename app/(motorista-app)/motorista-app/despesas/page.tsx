@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { ArrowUpCircle } from 'lucide-react'
-import { BtnRegistrarDespesa, BtnDeletarDespesa, FiltroCategoria, CATEGORIAS, getCat, fmt } from './despesas-client'
+import { BtnRegistrarDespesa, BtnDeletarDespesa, FiltroCategoria } from './despesas-client'
+import { getCat, fmt } from './despesas-shared'
 
 export default async function DespesasPage({
   searchParams,
@@ -96,7 +97,7 @@ export default async function DespesasPage({
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center justify-between mb-0.5">
-                        <span className="text-xs font-medium text-gray-700">{cat}</span>
+                        <span className="text-xs font-medium text-gray-700">{getCat(cat).nome}</span>
                         <span className="text-xs font-bold text-gray-900">{fmt(valor)}</span>
                       </div>
                       <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
@@ -104,11 +105,7 @@ export default async function DespesasPage({
                           className="h-full rounded-full"
                           style={{
                             width: `${pct}%`,
-                            backgroundColor: cat === 'Combustível' ? '#f97316'
-                              : cat === 'Manutenção' ? '#3b82f6'
-                              : cat === 'Lavagem' ? '#06b6d4'
-                              : cat === 'Seguro' ? '#a855f7'
-                              : '#6b7280'
+                            backgroundColor: getCat(cat).bar
                           }}
                         />
                       </div>
@@ -128,7 +125,7 @@ export default async function DespesasPage({
           {maiorCat && totalGeral > 0 && (
             <div className="mt-3 pt-3 border-t border-gray-100 flex items-center gap-2">
               <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${getCat(maiorCat[0]).badge}`}>
-                {maiorCat[0]}
+                {getCat(maiorCat[0]).nome}
               </span>
               <p className="text-xs text-gray-500">
                 representa {(maiorCat[1] / totalGeral * 100).toFixed(0)}% dos gastos
@@ -143,7 +140,7 @@ export default async function DespesasPage({
         <div className="flex items-center justify-between mb-3">
           <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">
             {listaFiltrada.length} registro{listaFiltrada.length !== 1 ? 's' : ''}
-            {filtroCat ? ` · ${filtroCat}` : ''}
+            {filtroCat ? ` · ${getCat(filtroCat).nome}` : ''}
           </p>
           {categorias.length > 0 && (
             <FiltroCategoria categorias={categorias} atual={filtroCat} />
@@ -156,7 +153,7 @@ export default async function DespesasPage({
               <ArrowUpCircle className="w-7 h-7 text-red-300" />
             </div>
             <p className="text-sm font-semibold text-gray-700 mb-1">
-              {filtroCat ? `Nenhuma despesa de ${filtroCat}` : 'Nenhuma despesa registrada'}
+              {filtroCat ? `Nenhuma despesa de ${getCat(filtroCat).nome}` : 'Nenhuma despesa registrada'}
             </p>
             <p className="text-xs text-gray-400">Toque em "Registrar" para adicionar.</p>
           </div>
@@ -180,10 +177,10 @@ export default async function DespesasPage({
                         </div>
                         <div className="flex-1 min-w-0">
                           <p className="text-sm font-semibold text-gray-900">
-                            {d.descricao || d.categoria}
+                            {d.descricao || getCat(d.categoria).nome}
                           </p>
                           {d.descricao && (
-                            <p className="text-xs text-gray-400">{d.categoria}</p>
+                            <p className="text-xs text-gray-400">{getCat(d.categoria).nome}</p>
                           )}
                         </div>
                         <p className="text-sm font-bold text-red-500 flex-shrink-0">-{fmt(d.valor ?? 0)}</p>
