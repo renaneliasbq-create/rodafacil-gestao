@@ -31,7 +31,7 @@ export function labelPlataforma(valor: string) {
   return PLATAFORMAS.find(p => p.valor === valor)?.label ?? valor
 }
 
-function fmt(v: number) {
+export function fmt(v: number) {
   return v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
 }
 
@@ -321,4 +321,3 @@ export function BtnRegistrarGanho() {
   )
 }
 
-export { BADGE, fmt }
