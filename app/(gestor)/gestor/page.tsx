@@ -134,10 +134,30 @@ function Variacao({ pct, valorDiff, inverter = false }: { pct: number; valorDiff
 export default async function GestorDashboardPage({
   searchParams,
 }: {
-  searchParams: { periodo?: string }
+  searchParams: { periodo?: string; de?: string; ate?: string }
 }) {
   const periodo = (searchParams.periodo ?? 'mes_atual') as PeriodoValue
-  const { inicio, fim, inicioAnterior, fimAnterior, mesesGrafico, labelPeriodo } = calcularIntervalo(periodo)
+
+  // Período personalizado: usa as datas direto dos searchParams
+  let inicio: string, fim: string, inicioAnterior: string, fimAnterior: string
+  let mesesGrafico: number, labelPeriodo: string
+
+  if (periodo === 'personalizado' && searchParams.de && searchParams.ate) {
+    inicio = searchParams.de
+    fim    = searchParams.ate
+    // Período anterior com a mesma duração
+    const diffMs  = new Date(fim + 'T12:00:00').getTime() - new Date(inicio + 'T12:00:00').getTime()
+    const diffDias = Math.round(diffMs / 86_400_000)
+    fimAnterior    = new Date(new Date(inicio + 'T12:00:00').getTime() - 86_400_000).toISOString().split('T')[0]
+    inicioAnterior = new Date(new Date(inicio + 'T12:00:00').getTime() - (diffDias + 1) * 86_400_000).toISOString().split('T')[0]
+    mesesGrafico   = Math.max(2, Math.min(12, Math.ceil(diffDias / 30)))
+    labelPeriodo   = `${new Date(inicio + 'T12:00:00').toLocaleDateString('pt-BR')} – ${new Date(fim + 'T12:00:00').toLocaleDateString('pt-BR')}`
+  } else {
+    const iv = calcularIntervalo(periodo === 'personalizado' ? 'mes_atual' : periodo)
+    inicio = iv.inicio; fim = iv.fim
+    inicioAnterior = iv.inicioAnterior; fimAnterior = iv.fimAnterior
+    mesesGrafico = iv.mesesGrafico; labelPeriodo = iv.labelPeriodo
+  }
 
   const hojeStr   = new Date().toISOString().split('T')[0]
   const quinzeStr = new Date(Date.now() + 15 * 86_400_000).toISOString().split('T')[0]
@@ -575,6 +595,13 @@ export default async function GestorDashboardPage({
             <Link href="/gestor/rentabilidade" className="ml-auto text-xs text-blue-600 hover:text-blue-700 font-medium whitespace-nowrap">
               Ver análise completa →
             </Link>
+          </div>
+
+          {/* Racional do indicador */}
+          <div className="px-4 py-3 bg-blue-50 border-b border-blue-100">
+            <p className="text-xs text-blue-700 leading-relaxed">
+              <span className="font-semibold">Como funciona:</span> compara o lucro líquido de cada veículo no período — receita recebida menos despesas vinculadas. Quanto maior a margem, maior o retorno sobre o aluguel cobrado.
+            </p>
           </div>
 
           {veiculoStats.length === 0 ? (
