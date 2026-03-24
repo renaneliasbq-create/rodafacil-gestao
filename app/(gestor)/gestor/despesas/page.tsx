@@ -39,7 +39,7 @@ export default async function DespesasPage({ searchParams }: { searchParams: Rec
   ] = await Promise.all([
     // Lista para exibição — limitada a 50 registros
     supabase.from('despesas')
-      .select('id, categoria, valor, data, descricao, created_at, veiculo_id, motorista_id')
+      .select('id, categoria, valor, data, descricao, created_at, veiculo_id, motorista_id, comprovante_url, comprovante_path')
       .order('data', { ascending: false })
       .limit(50),
     // Todas as despesas para cálculo de totais — sem limite
