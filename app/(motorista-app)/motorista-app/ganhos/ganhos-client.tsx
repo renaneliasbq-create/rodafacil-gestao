@@ -4,6 +4,9 @@ import { useState, useTransition, useRef, useEffect } from 'react'
 import { useFormState, useFormStatus } from 'react-dom'
 import { registrarGanho, deletarGanho, type GanhoState } from './actions'
 import { Plus, X, Loader2, Trash2, ChevronDown } from 'lucide-react'
+import { BADGE, fmt, labelPlataforma } from './ganhos-shared'
+
+export { BADGE, fmt, labelPlataforma }
 
 // ── Plataformas: valor (BD) → label (exibição) ──────────────────
 const PLATAFORMAS = [
@@ -16,23 +19,6 @@ const PLATAFORMAS = [
 
 const TAXAS: Record<string, number> = {
   uber: 25, '99': 20, ifood: 27, indrive: 20, outro: 0,
-}
-
-export const BADGE: Record<string, string> = {
-  uber:    'bg-black text-white',
-  '99':    'bg-yellow-400 text-yellow-900',
-  ifood:   'bg-red-500 text-white',
-  indrive: 'bg-emerald-600 text-white',
-  outro:   'bg-gray-400 text-white',
-}
-
-// Label legível a partir do valor do BD
-export function labelPlataforma(valor: string) {
-  return PLATAFORMAS.find(p => p.valor === valor)?.label ?? valor
-}
-
-export function fmt(v: number) {
-  return v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
 }
 
 // ── Botão submit ─────────────────────────────────────────────────
