@@ -5,7 +5,15 @@ import { useFormState, useFormStatus } from 'react-dom'
 import { salvarVeiculo, type VeiculoState } from './actions'
 import { Pencil, Plus, X, Loader2 } from 'lucide-react'
 
-const COMBUSTIVEIS = ['Flex', 'Gasolina', 'Etanol', 'GNV', 'Elétrico', 'Híbrido']
+const COMBUSTIVEIS = [
+  { valor: 'flex',     label: 'Flex' },
+  { valor: 'gasolina', label: 'Gasolina' },
+  { valor: 'etanol',   label: 'Etanol' },
+  { valor: 'gnv',      label: 'GNV' },
+  { valor: 'eletrico', label: 'Elétrico' },
+  { valor: 'hibrido',  label: 'Híbrido' },
+  { valor: 'diesel',   label: 'Diesel' },
+]
 
 const MARCAS_COMUNS = [
   'Chevrolet', 'Fiat', 'Ford', 'Honda', 'Hyundai',
@@ -173,13 +181,13 @@ function FormVeiculo({ veiculo, onClose }: { veiculo?: Veiculo; onClose: () => v
             <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Combustível</label>
             <div className="flex flex-wrap gap-2">
               {COMBUSTIVEIS.map(c => (
-                <label key={c} className="cursor-pointer">
-                  <input type="radio" name="tipo_combustivel" value={c}
-                    defaultChecked={veiculo?.tipo_combustivel === c || (!veiculo && c === 'Flex')}
+                <label key={c.valor} className="cursor-pointer">
+                  <input type="radio" name="tipo_combustivel" value={c.valor}
+                    defaultChecked={veiculo?.tipo_combustivel === c.valor || (!veiculo && c.valor === 'flex')}
                     className="sr-only peer"
                   />
                   <span className="px-3 py-1.5 rounded-xl text-sm font-semibold border-2 border-gray-200 text-gray-500 peer-checked:border-emerald-500 peer-checked:bg-emerald-50 peer-checked:text-emerald-700 transition-all inline-block">
-                    {c}
+                    {c.label}
                   </span>
                 </label>
               ))}

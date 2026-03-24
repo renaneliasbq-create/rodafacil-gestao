@@ -1,5 +1,10 @@
 import { createClient } from '@/lib/supabase/server'
 import { Car, Fuel, Calendar, Hash, Gauge, ArrowUpCircle, TrendingDown } from 'lucide-react'
+
+const LABEL_COMBUSTIVEL: Record<string, string> = {
+  flex: 'Flex', gasolina: 'Gasolina', etanol: 'Etanol',
+  gnv: 'GNV', eletrico: 'Elétrico', hibrido: 'Híbrido', diesel: 'Diesel',
+}
 import { BtnCadastrarVeiculo, BtnEditarVeiculo } from './veiculo-client'
 
 function fmt(v: number) {
@@ -101,7 +106,7 @@ export default async function VeiculoPage() {
                       <span className="text-white/60 text-xs">{veiculo.cor}</span>
                     )}
                     <span className="flex items-center gap-1 text-white/60 text-xs">
-                      <Fuel className="w-3.5 h-3.5" />{veiculo.tipo_combustivel}
+                      <Fuel className="w-3.5 h-3.5" />{LABEL_COMBUSTIVEL[veiculo.tipo_combustivel] ?? veiculo.tipo_combustivel}
                     </span>
                   </div>
                 </div>
@@ -152,7 +157,7 @@ export default async function VeiculoPage() {
               <InfoRow label="Ano" valor={String(veiculo.ano)} />
               <InfoRow label="Placa" valor={veiculo.placa} />
               {veiculo.cor && <InfoRow label="Cor" valor={veiculo.cor} />}
-              <InfoRow label="Combustível" valor={veiculo.tipo_combustivel} />
+              <InfoRow label="Combustível" valor={LABEL_COMBUSTIVEL[veiculo.tipo_combustivel] ?? veiculo.tipo_combustivel} />
               {veiculo.valor_compra && (
                 <InfoRow label="Valor de compra" valor={fmt(veiculo.valor_compra)} />
               )}
