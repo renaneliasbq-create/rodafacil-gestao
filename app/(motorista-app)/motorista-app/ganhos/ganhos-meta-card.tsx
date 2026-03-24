@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useTransition } from 'react'
+import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Target, Pencil, Loader2 } from 'lucide-react'
 import { salvarMeta } from './actions'
@@ -19,21 +19,21 @@ export function GanhosMetaCard({ meta, totalLiq, mes, ano }: Props) {
   const [valorInput, setValorInput] = useState(
     meta ? String(meta.toFixed(2)).replace('.', ',') : ''
   )
-  const [isPending, startTransition] = useTransition()
+  const [isPending, setIsPending] = useState(false)
 
   const pct = meta && meta > 0 ? Math.min((totalLiq / meta) * 100, 100) : 0
   const restante = meta ? Math.max(meta - totalLiq, 0) : 0
   const barColor =
     pct >= 80 ? 'bg-emerald-500' : pct >= 50 ? 'bg-yellow-400' : 'bg-red-400'
 
-  function salvar() {
+  async function salvar() {
     const valor = parseFloat(valorInput.replace(',', '.'))
     if (isNaN(valor) || valor <= 0) return
-    startTransition(async () => {
-      await salvarMeta(mes, ano, valor)
-      router.refresh()
-      setEditando(false)
-    })
+    setIsPending(true)
+    await salvarMeta(mes, ano, valor)
+    router.refresh()
+    setEditando(false)
+    setIsPending(false)
   }
 
   if (editando) {
