@@ -3,7 +3,7 @@
 import { useState, useTransition, useRef, useEffect } from 'react'
 import { useFormState, useFormStatus } from 'react-dom'
 import { registrarDespesa, deletarDespesa, type DespesaState } from './actions'
-import { Plus, X, Loader2, Trash2, ChevronDown } from 'lucide-react'
+import { Plus, X, Loader2, Trash2, ChevronDown, ChevronLeft, ChevronRight } from 'lucide-react'
 import { CATEGORIAS, getCat, fmt } from './despesas-shared'
 
 export { CATEGORIAS, getCat, fmt }
@@ -227,5 +227,41 @@ export function BtnRegistrarDespesa() {
       </button>
       {open && <ModalDespesa onClose={() => setOpen(false)} />}
     </>
+  )
+}
+
+// ── Navegação de mês ──────────────────────────────────────────
+export function NavMes({ mes, ano, label }: { mes: number; ano: number; label: string }) {
+  const hoje = new Date()
+  const isCurrentMonth = ano === hoje.getFullYear() && mes === hoje.getMonth() + 1
+
+  const prevM = mes === 1 ? 12 : mes - 1
+  const prevA = mes === 1 ? ano - 1 : ano
+  const nextM = mes === 12 ? 1 : mes + 1
+  const nextA = mes === 12 ? ano + 1 : ano
+
+  function navegar(novoMes: number, novoAno: number) {
+    const url = new URL(window.location.href)
+    url.searchParams.set('mes', `${novoAno}-${String(novoMes).padStart(2, '0')}`)
+    window.location.href = url.toString()
+  }
+
+  return (
+    <div className="flex items-center gap-1 mt-0.5">
+      <button
+        onClick={() => navegar(prevM, prevA)}
+        className="w-7 h-7 flex items-center justify-center text-gray-400 hover:text-gray-700 rounded-lg hover:bg-gray-100 transition-colors"
+      >
+        <ChevronLeft className="w-4 h-4" />
+      </button>
+      <span className="text-sm text-gray-400 min-w-[120px] text-center">{label}</span>
+      <button
+        onClick={() => navegar(nextM, nextA)}
+        disabled={isCurrentMonth}
+        className="w-7 h-7 flex items-center justify-center text-gray-400 hover:text-gray-700 rounded-lg hover:bg-gray-100 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+      >
+        <ChevronRight className="w-4 h-4" />
+      </button>
+    </div>
   )
 }

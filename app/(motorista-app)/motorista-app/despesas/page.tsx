@@ -1,6 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { ArrowUpCircle } from 'lucide-react'
-import { BtnRegistrarDespesa, BtnDeletarDespesa, FiltroCategoria } from './despesas-client'
+import { BtnRegistrarDespesa, BtnDeletarDespesa, FiltroCategoria, NavMes } from './despesas-client'
 import { getCat, fmt } from './despesas-shared'
 
 export default async function DespesasPage({
@@ -71,7 +71,7 @@ export default async function DespesasPage({
       <div className="px-4 pt-6 pb-4 flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-extrabold text-gray-900">Despesas</h1>
-          <p className="text-sm text-gray-400 mt-0.5">{mesLabel}</p>
+          <NavMes mes={mes} ano={ano} label={mesLabel} />
         </div>
         <BtnRegistrarDespesa />
       </div>
