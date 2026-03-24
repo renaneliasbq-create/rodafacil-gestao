@@ -1,6 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { TrendingUp } from 'lucide-react'
-import { BtnRegistrarGanho, BtnDeletarGanho, FiltroPlatforma, BADGE, fmt } from './ganhos-client'
+import { BtnRegistrarGanho, BtnDeletarGanho, FiltroPlatforma, BADGE, fmt, labelPlataforma } from './ganhos-client'
 
 export default async function GanhosPage({
   searchParams,
@@ -106,7 +106,7 @@ export default async function GanhosPage({
               return (
                 <div key={p} className="bg-white border border-gray-100 rounded-2xl px-3 py-3 shadow-sm">
                   <div className="flex items-center justify-between mb-1.5">
-                    <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${BADGE[p] ?? 'bg-gray-400 text-white'}`}>{p}</span>
+                    <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${BADGE[p] ?? 'bg-gray-400 text-white'}`}>{labelPlataforma(p)}</span>
                     <span className="text-xs text-gray-400">{ganhoP.length}x</span>
                   </div>
                   <p className="text-base font-extrabold text-gray-900">{fmt(liqP)}</p>
@@ -155,7 +155,7 @@ export default async function GanhosPage({
                   {porData[data].map(g => (
                     <div key={g.id} className="flex items-center gap-3 px-4 py-3">
                       <span className={`text-[10px] font-bold px-2 py-1 rounded-full flex-shrink-0 ${BADGE[g.plataforma] ?? 'bg-gray-400 text-white'}`}>
-                        {g.plataforma}
+                        {labelPlataforma(g.plataforma)}
                       </span>
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-bold text-emerald-700">+{fmt(g.valor_liquido ?? 0)}</p>

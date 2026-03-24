@@ -5,23 +5,30 @@ import { useFormState, useFormStatus } from 'react-dom'
 import { registrarGanho, deletarGanho, type GanhoState } from './actions'
 import { Plus, X, Loader2, Trash2, ChevronDown } from 'lucide-react'
 
-// ── Taxas padrão por plataforma ─────────────────────────────────
+// ── Plataformas: valor (BD) → label (exibição) ──────────────────
+const PLATAFORMAS = [
+  { valor: 'uber',    label: 'Uber' },
+  { valor: '99',      label: '99' },
+  { valor: 'ifood',   label: 'iFood' },
+  { valor: 'indrive', label: 'Indrive' },
+  { valor: 'outro',   label: 'Outro' },
+]
+
 const TAXAS: Record<string, number> = {
-  'Uber':    25,
-  '99':      20,
-  'iFood':   27,
-  'Indrive': 20,
-  'Outro':   0,
+  uber: 25, '99': 20, ifood: 27, indrive: 20, outro: 0,
 }
 
-const PLATAFORMAS = ['Uber', '99', 'iFood', 'Indrive', 'Outro']
+export const BADGE: Record<string, string> = {
+  uber:    'bg-black text-white',
+  '99':    'bg-yellow-400 text-yellow-900',
+  ifood:   'bg-red-500 text-white',
+  indrive: 'bg-emerald-600 text-white',
+  outro:   'bg-gray-400 text-white',
+}
 
-const BADGE: Record<string, string> = {
-  'Uber':    'bg-black text-white',
-  '99':      'bg-yellow-400 text-yellow-900',
-  'iFood':   'bg-red-500 text-white',
-  'Indrive': 'bg-emerald-600 text-white',
-  'Outro':   'bg-gray-400 text-white',
+// Label legível a partir do valor do BD
+export function labelPlataforma(valor: string) {
+  return PLATAFORMAS.find(p => p.valor === valor)?.label ?? valor
 }
 
 function fmt(v: number) {
@@ -45,7 +52,7 @@ function BtnSubmit() {
 // ── Modal de registro ────────────────────────────────────────────
 function ModalGanho({ onClose }: { onClose: () => void }) {
   const [state, formAction] = useFormState<GanhoState, FormData>(registrarGanho, null)
-  const [plataforma, setPlataforma] = useState('Uber')
+  const [plataforma, setPlataforma] = useState('uber')
   const [bruto, setBruto]           = useState('')
   const [taxa, setTaxa]             = useState(25)
   const [liquido, setLiquido]       = useState('')
@@ -99,16 +106,16 @@ function ModalGanho({ onClose }: { onClose: () => void }) {
             <div className="flex flex-wrap gap-2">
               {PLATAFORMAS.map(p => (
                 <button
-                  key={p}
+                  key={p.valor}
                   type="button"
-                  onClick={() => handlePlataforma(p)}
+                  onClick={() => handlePlataforma(p.valor)}
                   className={`px-3 py-1.5 rounded-xl text-sm font-semibold border-2 transition-all ${
-                    plataforma === p
+                    plataforma === p.valor
                       ? 'border-emerald-500 bg-emerald-50 text-emerald-700'
                       : 'border-gray-200 text-gray-500 hover:border-gray-300'
                   }`}
                 >
-                  {p}
+                  {p.label}
                 </button>
               ))}
             </div>
@@ -153,7 +160,7 @@ function ModalGanho({ onClose }: { onClose: () => void }) {
               <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
                 Taxa da plataforma
               </label>
-              <span className="text-xs text-gray-400">padrão {plataforma}: {TAXAS[plataforma]}%</span>
+              <span className="text-xs text-gray-400">padrão {labelPlataforma(plataforma)}: {TAXAS[plataforma]}%</span>
             </div>
             <div className="relative">
               <input
