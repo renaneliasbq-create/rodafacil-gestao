@@ -7,6 +7,7 @@ export default async function GanhosPage({
 }: {
   searchParams: { p?: string; mes?: string }
 }) {
+  try {
   const supabase = createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return null
@@ -175,4 +176,14 @@ export default async function GanhosPage({
       </div>
     </div>
   )
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : String(err)
+    return (
+      <div className="p-6">
+        <p className="text-red-600 font-mono text-sm bg-red-50 border border-red-200 rounded-xl p-4">
+          Erro: {msg}
+        </p>
+      </div>
+    )
+  }
 }
