@@ -43,9 +43,11 @@ export async function salvarVeiculo(
   const payload = { marca, modelo, placa, ano, cor, tipo_combustivel, valor_compra }
 
   if (existente) {
-    await supabase.from('motorista_veiculo').update(payload).eq('id', existente.id)
+    const { error } = await supabase.from('motorista_veiculo').update(payload).eq('id', existente.id)
+    if (error) return { error: `Erro ao atualizar: ${error.message}` }
   } else {
-    await supabase.from('motorista_veiculo').insert({ ...payload, motorista_id: user.id })
+    const { error } = await supabase.from('motorista_veiculo').insert({ ...payload, motorista_id: user.id })
+    if (error) return { error: `Erro ao salvar: ${error.message}` }
   }
 
   revalidatePath('/motorista-app/veiculo')
