@@ -38,7 +38,7 @@ export async function registrarGanho(
     horas_trabalhadas,
   })
 
-  if (error) return { error: 'Erro ao salvar. Tente novamente.' }
+  if (error) return { error: `Erro: ${error.message} | plataforma="${plataforma}"` }
 
   revalidatePath('/motorista-app/ganhos')
   revalidatePath('/motorista-app')
