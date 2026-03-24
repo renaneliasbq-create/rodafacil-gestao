@@ -92,6 +92,11 @@ export default async function GanhosPage({
               <p className="text-white font-bold text-sm">{taxaMedia > 0 ? `${taxaMedia.toFixed(1)}%` : '—'}</p>
             </div>
           </div>
+          {taxaMedia > 0 && (
+            <p className="text-emerald-100/70 text-[10px] mt-2 text-center leading-snug">
+              Taxa média: % do bruto retida pelas plataformas. Quanto menor, mais você ficou do que rodou.
+            </p>
+          )}
         </div>
       </div>
 
