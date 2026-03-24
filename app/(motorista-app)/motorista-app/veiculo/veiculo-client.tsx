@@ -43,11 +43,8 @@ function FormVeiculo({ veiculo, onClose }: { veiculo?: Veiculo; onClose: () => v
   const [marca, setMarca]   = useState(veiculo?.marca ?? '')
   const [marcaCustom, setMarcaCustom] = useState(!MARCAS_COMUNS.includes(veiculo?.marca ?? '') && !!veiculo?.marca)
   const formRef = useRef<HTMLFormElement>(null)
-  const prevState = useRef(state)
-
   useEffect(() => {
-    if (prevState.current !== null && state === null) onClose()
-    prevState.current = state
+    if (state?.success) onClose()
   }, [state, onClose])
 
   const anoAtual = new Date().getFullYear()

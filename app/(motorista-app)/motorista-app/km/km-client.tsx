@@ -23,11 +23,9 @@ function ModalKm({ onClose, kmFinalAnterior }: { onClose: () => void; kmFinalAnt
   const [inicial, setInicial] = useState(kmFinalAnterior ? String(kmFinalAnterior) : '')
   const [final, setFinal]     = useState('')
   const formRef = useRef<HTMLFormElement>(null)
-  const prevState = useRef(state)
 
   useEffect(() => {
-    if (prevState.current !== null && state === null) onClose()
-    prevState.current = state
+    if (state?.success) onClose()
   }, [state, onClose])
 
   const hoje = new Date().toISOString().split('T')[0]

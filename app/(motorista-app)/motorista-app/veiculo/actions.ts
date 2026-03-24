@@ -3,7 +3,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
 
-export type VeiculoState = { error?: string } | null
+export type VeiculoState = { error?: string; success?: boolean } | null
 
 export async function salvarVeiculo(
   _prev: VeiculoState,
@@ -50,5 +50,5 @@ export async function salvarVeiculo(
 
   revalidatePath('/motorista-app/veiculo')
   revalidatePath('/motorista-app')
-  return null
+  return { success: true }
 }

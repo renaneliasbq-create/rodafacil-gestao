@@ -3,7 +3,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
 
-export type KmState = { error?: string } | null
+export type KmState = { error?: string; success?: boolean } | null
 
 export async function registrarKm(
   _prev: KmState,
@@ -37,7 +37,7 @@ export async function registrarKm(
 
   revalidatePath('/motorista-app/km')
   revalidatePath('/motorista-app')
-  return null
+  return { success: true }
 }
 
 export async function deletarKm(id: string) {

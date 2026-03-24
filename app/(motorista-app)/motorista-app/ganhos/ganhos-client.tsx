@@ -65,12 +65,8 @@ function ModalGanho({ onClose }: { onClose: () => void }) {
     setTaxa(TAXAS[p] ?? 0)
   }
 
-  // Fecha ao salvar com sucesso
   useEffect(() => {
-    if (state === null && formRef.current) {
-      // state voltou null = sucesso
-      onClose()
-    }
+    if (state?.success) onClose()
   }, [state, onClose])
 
   const hoje = new Date().toISOString().split('T')[0]

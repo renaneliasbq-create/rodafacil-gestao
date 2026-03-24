@@ -3,7 +3,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
 
-export type GanhoState = { error?: string } | null
+export type GanhoState = { error?: string; success?: boolean } | null
 
 export async function registrarGanho(
   _prev: GanhoState,
@@ -42,7 +42,7 @@ export async function registrarGanho(
 
   revalidatePath('/motorista-app/ganhos')
   revalidatePath('/motorista-app')
-  return null
+  return { success: true }
 }
 
 export async function deletarGanho(id: string) {

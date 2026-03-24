@@ -44,13 +44,8 @@ function ModalDespesa({ onClose }: { onClose: () => void }) {
   const [state, formAction] = useFormState<DespesaState, FormData>(registrarDespesa, null)
   const [categoria, setCategoria] = useState('Combustível')
   const formRef = useRef<HTMLFormElement>(null)
-  const prevState = useRef(state)
-
   useEffect(() => {
-    if (prevState.current !== null && state === null) {
-      onClose()
-    }
-    prevState.current = state
+    if (state?.success) onClose()
   }, [state, onClose])
 
   const hoje = new Date().toISOString().split('T')[0]

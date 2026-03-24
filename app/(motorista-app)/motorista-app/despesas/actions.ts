@@ -3,7 +3,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
 
-export type DespesaState = { error?: string } | null
+export type DespesaState = { error?: string; success?: boolean } | null
 
 export async function registrarDespesa(
   _prev: DespesaState,
@@ -36,7 +36,7 @@ export async function registrarDespesa(
 
   revalidatePath('/motorista-app/despesas')
   revalidatePath('/motorista-app')
-  return null
+  return { success: true }
 }
 
 export async function deletarDespesa(id: string) {
