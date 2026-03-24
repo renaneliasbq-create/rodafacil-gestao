@@ -45,6 +45,18 @@ export async function registrarGanho(
   return { success: true }
 }
 
+export async function salvarMeta(mes: number, ano: number, valor_meta: number): Promise<void> {
+  const supabase = createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return
+
+  await supabase.from('motorista_metas').upsert(
+    { motorista_id: user.id, mes, ano, valor_meta },
+    { onConflict: 'motorista_id,mes,ano' }
+  )
+  revalidatePath('/motorista-app/ganhos')
+}
+
 export async function deletarGanho(id: string) {
   const supabase = createClient()
   const { data: { user } } = await supabase.auth.getUser()
