@@ -6,7 +6,7 @@ import { cn } from '@/lib/utils'
 import {
   LayoutDashboard, Users, Car, ArrowDownCircle, ArrowUpCircle,
   FileBarChart, Settings, LogOut, ChevronLeft, Building2, Wallet,
-  MoreHorizontal, X, AlertTriangle, Bell, TrendingUp,
+  MoreHorizontal, X, AlertTriangle, Bell, TrendingUp, CreditCard,
 } from 'lucide-react'
 import { useState } from 'react'
 import { signOut } from '@/app/(auth)/login/actions'
@@ -25,6 +25,7 @@ const NAV_ITEMS = [
   { href: '/gestor/rentabilidade',    label: 'Rentabilidade',  icon: TrendingUp },
   { href: '/gestor/relatorios',       label: 'Relatórios',     icon: FileBarChart },
   { href: '/gestor/configuracoes',    label: 'Configurações',  icon: Settings },
+  { href: '/gestor/assinatura',       label: 'Minha Assinatura', icon: CreditCard },
 ]
 
 // 4 itens principais na bottom nav
@@ -45,6 +46,7 @@ const MAIS_ITEMS = [
   { href: '/gestor/rentabilidade',  label: 'Rentabilidade', icon: TrendingUp },
   { href: '/gestor/relatorios',     label: 'Relatórios',    icon: FileBarChart },
   { href: '/gestor/configuracoes',  label: 'Configurações', icon: Settings },
+  { href: '/gestor/assinatura',     label: 'Minha Assinatura', icon: CreditCard },
 ]
 
 interface SidebarProps {

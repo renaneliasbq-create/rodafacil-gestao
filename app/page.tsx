@@ -40,7 +40,7 @@ const FAQS = [
   { q: 'Como funciona para donos de frota?', a: 'Você cadastra seus veículos, vincula motoristas, registra contratos e acompanha despesas. Tudo em um painel centralizado, com visão por veículo, motorista e período.' },
   { q: 'Como funciona para motoristas de app?', a: 'Você registra seus ganhos por plataforma e suas despesas do dia a dia. O sistema calcula sua taxa média, lucro líquido e compara sua evolução mês a mês.' },
   { q: 'Meus dados ficam seguros?', a: 'Sim. Utilizamos infraestrutura segura com autenticação individual. Cada usuário acessa apenas seus próprios dados.' },
-  { q: 'Como posso começar?', a: 'Entre em contato via WhatsApp ou e-mail. Nossa equipe configura seu acesso e te acompanha nos primeiros passos.' },
+  { q: 'Como posso começar?', a: 'É simples e 100% self-service! Acesse nossa página de planos, escolha o plano ideal, faça o pagamento via PIX, cartão ou boleto e já tenha acesso imediato ao sistema. Sem precisar falar com ninguém.' },
 ]
 
 function FaqItem({ q, a }: { q: string; a: string }) {
@@ -118,9 +118,12 @@ export default function LandingPage() {
             </a>
 
             <nav className="hidden md:flex items-center gap-7 text-sm font-medium">
-              {[['#como-funciona','Como funciona'],['#diferenciais','Diferenciais'],['#manutencao','Manutenção'],['#faq','FAQ']].map(([href, label]) => (
+              {[['#como-funciona','Como funciona'],['#diferenciais','Diferenciais'],['#manutencao','Motoristas'],['#faq','FAQ']].map(([href, label]) => (
                 <a key={href} href={href} className={`hover:text-blue-500 transition-colors ${scrolled ? 'text-gray-500' : 'text-white/70 hover:text-white'}`}>{label}</a>
               ))}
+              <Link href="/planos" className={`font-semibold hover:text-blue-500 transition-colors ${scrolled ? 'text-blue-600' : 'text-blue-300 hover:text-blue-200'}`}>
+                Planos e preços
+              </Link>
             </nav>
 
             <div className="flex items-center gap-2">
@@ -130,12 +133,12 @@ export default function LandingPage() {
               >
                 Login Gerenciamento
               </Link>
-              <a
-                href="#contato"
+              <Link
+                href="/planos"
                 className={`font-semibold px-5 py-2 rounded-lg text-sm transition-all shadow-sm ${scrolled ? 'bg-blue-600 text-white hover:bg-blue-700' : 'bg-white text-blue-800 hover:bg-blue-50'}`}
               >
-                Falar com a equipe
-              </a>
+                Assinar agora
+              </Link>
             </div>
           </div>
         </div>
@@ -168,17 +171,17 @@ export default function LandingPage() {
               </p>
 
               <div className="flex flex-wrap gap-3 mb-14">
-                <a href="#contato" className="inline-flex items-center gap-2 bg-white text-blue-800 hover:bg-blue-50 font-bold px-7 py-3.5 rounded-xl text-sm transition-all shadow-xl hover:shadow-2xl hover:scale-[1.03]">
-                  Quero conhecer
+                <Link href="/planos" className="inline-flex items-center gap-2 bg-white text-blue-800 hover:bg-blue-50 font-bold px-7 py-3.5 rounded-xl text-sm transition-all shadow-xl hover:shadow-2xl hover:scale-[1.03]">
+                  Ver planos e preços
                   <ArrowRight className="w-4 h-4" />
-                </a>
+                </Link>
                 <a href="#como-funciona" className="inline-flex items-center gap-2 border border-white/20 text-white/80 hover:border-white/50 hover:text-white font-medium px-7 py-3.5 rounded-xl text-sm transition-all hover:bg-white/5">
                   Ver como funciona
                 </a>
               </div>
 
               <div className="flex flex-wrap gap-x-8 gap-y-4">
-                {[['40','Veículos gerenciados'],['48h','Para estar no ar'],['100%','Digital, sem papel']].map(([val, label], i) => (
+                {[['40','Veículos gerenciados'],['Imediato','Acesso na hora'],['100%','Digital, sem papel']].map(([val, label], i) => (
                   <div key={val} className={`stat-item ${i === 0 ? 'pl-0' : 'pl-5'}`}>
                     <p className="text-2xl font-extrabold text-white">{val}</p>
                     <p className="text-blue-300/70 text-xs mt-0.5">{label}</p>
@@ -232,9 +235,9 @@ export default function LandingPage() {
                     </div>
                   </div>
                 </div>
-                <a href="#contato" className="block w-full bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold text-center py-3 rounded-xl transition-colors">
-                  Acessar o sistema →
-                </a>
+                <Link href="/planos" className="block w-full bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold text-center py-3 rounded-xl transition-colors">
+                  Ver planos e começar →
+                </Link>
               </div>
               <div className="absolute -top-5 -right-5 bg-white text-gray-900 font-bold text-xs px-4 py-2.5 rounded-xl shadow-xl flex items-center gap-2">
                 <svg className="w-3.5 h-3.5 text-blue-600" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd"/></svg>
@@ -264,8 +267,8 @@ export default function LandingPage() {
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             {[
-              { num: '1', color: 'bg-blue-600', title: 'Crie sua conta', desc: 'Acesso 100% online, sem papel e sem burocracia. Em minutos você já está dentro do sistema.', icon: <svg className="w-9 h-9 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg> },
-              { num: '2', color: 'bg-blue-700', title: 'Configure sua operação', desc: 'Dono de frota? Cadastre seus veículos e motoristas. Motorista? Conecte suas plataformas e comece a registrar.', icon: <svg className="w-9 h-9 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"/></svg> },
+              { num: '1', color: 'bg-blue-600', title: 'Escolha seu plano', desc: 'Acesse a página de planos, escolha o ideal para o seu perfil e conclua o pagamento online — PIX, cartão ou boleto. Tudo em minutos.', icon: <svg className="w-9 h-9 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg> },
+              { num: '2', color: 'bg-blue-700', title: 'Configure sua operação', desc: 'Dono de frota? Cadastre seus veículos e motoristas. Motorista? Comece a registrar seus ganhos e despesas por plataforma.', icon: <svg className="w-9 h-9 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"/></svg> },
               { num: '3', color: 'bg-blue-800', title: 'Tenha controle total', desc: 'Acompanhe frota, motoristas, ganhos e despesas em tempo real. Dados precisos para decisões melhores.', icon: <svg className="w-9 h-9 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg> },
             ].map(({ num, color, title, desc, icon }) => (
               <div key={num} className="text-center group">
@@ -440,6 +443,47 @@ export default function LandingPage() {
         </div>
       </section>
 
+      {/* ── PLANOS TEASER ─────────────────────────────────── */}
+      <section className="py-24 bg-white border-t border-gray-100">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-14">
+            <span className="inline-block bg-blue-50 text-blue-600 text-xs font-bold px-4 py-1.5 rounded-full uppercase tracking-widest mb-4">Planos</span>
+            <h2 className="text-3xl sm:text-4xl font-extrabold text-gray-900 tracking-tight mb-3">Simples, transparente e acessível</h2>
+            <p className="text-gray-400 text-sm max-w-md mx-auto">Escolha o plano ideal para o seu perfil. Assine online em minutos, sem burocracia.</p>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+            {[
+              { label: 'Motorista Pro', preco: 'R$19,90', sub: '/mês', desc: 'Para motoristas de app', cor: 'border-blue-100', icon: '🚗' },
+              { label: 'Gestor Starter', preco: 'R$49,90', sub: '/mês', desc: 'Frota pequena até 5 veículos', cor: 'border-blue-100', icon: '🏢' },
+              { label: 'Gestor Pro', preco: 'R$99,90', sub: '/mês', desc: 'Frota média até 15 veículos', cor: 'border-blue-500 ring-2 ring-blue-500/20', destaque: true, icon: '⭐' },
+              { label: 'Gestor Frota', preco: 'R$199,90', sub: '/mês', desc: 'Frota grande sem limite', cor: 'border-blue-100', icon: '🚛' },
+            ].map(({ label, preco, sub, desc, cor, destaque, icon }) => (
+              <div key={label} className={`relative rounded-2xl border-2 ${cor} bg-white p-6 flex flex-col gap-3 card-lift`}>
+                {destaque && (
+                  <span className="absolute -top-3 left-1/2 -translate-x-1/2 bg-blue-600 text-white text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-wider">Mais popular</span>
+                )}
+                <span className="text-2xl">{icon}</span>
+                <div>
+                  <p className="font-bold text-gray-900 text-sm">{label}</p>
+                  <p className="text-gray-400 text-xs mt-0.5">{desc}</p>
+                </div>
+                <div className="mt-auto">
+                  <span className="text-2xl font-extrabold text-gray-900">{preco}</span>
+                  <span className="text-gray-400 text-xs">{sub}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+          <div className="text-center mt-10">
+            <Link href="/planos" className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-bold px-8 py-3.5 rounded-xl text-sm transition-all shadow-lg hover:shadow-xl hover:scale-[1.02]">
+              Ver todos os planos e detalhes
+              <ArrowRight className="w-4 h-4" />
+            </Link>
+            <p className="text-gray-400 text-xs mt-3">Cancele quando quiser · Sem fidelidade</p>
+          </div>
+        </div>
+      </section>
+
       {/* ── FAQ ───────────────────────────────────────────── */}
       <section id="faq" className="py-28 bg-white">
         <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -458,10 +502,10 @@ export default function LandingPage() {
         <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <h2 className="text-3xl sm:text-4xl font-extrabold text-white tracking-tight mb-4">Pronto para ter controle total?</h2>
           <p className="text-blue-200 text-sm mb-8 max-w-md mx-auto">Dono de frota ou motorista de app — configure sua conta em minutos e comece a tomar decisões com dados reais.</p>
-          <a href="#contato" className="inline-flex items-center gap-2 bg-white text-blue-800 hover:bg-blue-50 font-bold px-8 py-4 rounded-xl text-sm transition-all shadow-xl hover:scale-[1.03]">
-            Quero começar agora
+          <Link href="/planos" className="inline-flex items-center gap-2 bg-white text-blue-800 hover:bg-blue-50 font-bold px-8 py-4 rounded-xl text-sm transition-all shadow-xl hover:scale-[1.03]">
+            Ver planos e começar
             <ArrowRight className="w-4 h-4" />
-          </a>
+          </Link>
         </div>
       </section>
 
@@ -470,8 +514,8 @@ export default function LandingPage() {
         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-14">
             <span className="inline-block bg-blue-100 text-blue-600 text-xs font-bold px-4 py-1.5 rounded-full uppercase tracking-widest mb-4">Fale com a gente</span>
-            <h2 className="text-3xl sm:text-4xl font-extrabold text-gray-900 tracking-tight">Dê o primeiro passo</h2>
-            <p className="text-gray-400 text-sm mt-3">Nossa equipe entra em contato em breve para configurar seu acesso.</p>
+            <h2 className="text-3xl sm:text-4xl font-extrabold text-gray-900 tracking-tight">Ficou com alguma dúvida?</h2>
+            <p className="text-gray-400 text-sm mt-3">Nossa equipe está aqui para te ajudar. Mas se preferir, você já pode assinar agora mesmo — direto pelo site, sem precisar falar com ninguém.</p>
           </div>
           <div className="grid grid-cols-1 lg:grid-cols-5 gap-8">
             <div className="lg:col-span-2 space-y-4">
@@ -513,16 +557,16 @@ export default function LandingPage() {
             </div>
             <div className="lg:col-span-3">
               <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-8">
-                <p className="font-bold text-gray-900 text-base mb-6">Entrar em contato</p>
+                <p className="font-bold text-gray-900 text-base mb-6">Envie sua mensagem</p>
                 <form
                   onSubmit={e => {
                     e.preventDefault()
                     const fd = new FormData(e.currentTarget as HTMLFormElement)
                     const nome = fd.get('nome')
                     const telefone = fd.get('telefone')
-                    const plataforma = fd.get('plataforma')
+                    const perfil = fd.get('plataforma')
                     const mensagem = fd.get('mensagem')
-                    const texto = encodeURIComponent(`Olá! Me chamo ${nome} e tenho interesse em locar um veículo.\nPlataforma: ${plataforma}\n${mensagem ? 'Mensagem: ' + mensagem : ''}`)
+                    const texto = encodeURIComponent(`Olá! Me chamo ${nome} e tenho uma dúvida sobre a Roda Fácil.\nPerfil: ${perfil}\n${mensagem ? 'Mensagem: ' + mensagem : ''}`)
                     window.open(`https://wa.me/5547999987722?text=${texto}`, '_blank')
                   }}
                   className="space-y-4"
@@ -548,14 +592,20 @@ export default function LandingPage() {
                     </select>
                   </div>
                   <div>
-                    <label className="block text-xs font-semibold text-gray-500 mb-1.5 uppercase tracking-wide">Mensagem (opcional)</label>
-                    <textarea rows={3} name="mensagem" placeholder="Alguma dúvida?" className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm text-gray-900 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all resize-none"></textarea>
+                    <label className="block text-xs font-semibold text-gray-500 mb-1.5 uppercase tracking-wide">Sua dúvida *</label>
+                    <textarea rows={3} name="mensagem" placeholder="Escreva sua dúvida ou comentário..." required className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm text-gray-900 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all resize-none"></textarea>
                   </div>
                   <button type="submit" className="w-full bg-blue-700 hover:bg-blue-800 text-white font-bold py-4 rounded-xl text-sm transition-all hover:scale-[1.01] shadow-md flex items-center justify-center gap-2">
-                    Quero começar agora
+                    Enviar pelo WhatsApp
                     <ArrowRight className="w-4 h-4" />
                   </button>
-                  <p className="text-center text-gray-300 text-xs">Seus dados estão seguros. Entraremos em contato apenas sobre a Roda Fácil.</p>
+                  <div className="border-t border-gray-100 pt-4 text-center">
+                    <p className="text-gray-400 text-xs mb-3">Prefere já começar sem precisar de ajuda?</p>
+                    <Link href="/planos" className="inline-flex items-center gap-1.5 text-blue-600 hover:text-blue-700 font-semibold text-sm transition-colors">
+                      Ver planos e assinar agora
+                      <ArrowRight className="w-3.5 h-3.5" />
+                    </Link>
+                  </div>
                 </form>
               </div>
             </div>
@@ -579,7 +629,7 @@ export default function LandingPage() {
             <div>
               <p className="text-xs font-semibold uppercase tracking-widest text-white/30 mb-4">Navegação</p>
               <ul className="space-y-2.5 text-sm text-white/50">
-                {[['#como-funciona','Como funciona'],['#diferenciais','Diferenciais'],['#manutencao','Manutenção'],['#faq','Perguntas frequentes']].map(([href, label]) => (
+                {[['#como-funciona','Como funciona'],['#diferenciais','Diferenciais'],['#manutencao','Para motoristas'],['#faq','Perguntas frequentes'],].map(([href, label]) => (
                   <li key={href}><a href={href} className="hover:text-white transition-colors">{label}</a></li>
                 ))}
               </ul>

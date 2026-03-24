@@ -3,7 +3,7 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { cn } from '@/lib/utils'
-import { LayoutDashboard, TrendingUp, ArrowUpCircle, Gauge, BarChart2, MoreHorizontal, X, Settings, LogOut, Car, Bell } from 'lucide-react'
+import { LayoutDashboard, TrendingUp, ArrowUpCircle, Gauge, BarChart2, MoreHorizontal, X, Settings, LogOut, Car, Bell, CreditCard } from 'lucide-react'
 import { useState } from 'react'
 import { signOut } from '@/app/(auth)/login/actions'
 
@@ -19,6 +19,7 @@ const MAIS_ITEMS = [
   { href: '/motorista-app/veiculo',    label: 'Meu Veículo', icon: Car },
   { href: '/motorista-app/alertas',    label: 'Alertas',     icon: Bell },
   { href: '/motorista-app/configuracoes', label: 'Configurações', icon: Settings },
+  { href: '/motorista-app/assinatura',    label: 'Assinatura',    icon: CreditCard },
 ]
 
 interface BottomNavProps {

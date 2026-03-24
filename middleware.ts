@@ -24,10 +24,15 @@ export async function middleware(request: NextRequest) {
   const { data: { user } } = await supabase.auth.getUser()
   const { pathname } = request.nextUrl
 
-  // Rotas públicas — não precisa de auth
+  // Rotas de assinatura — acessíveis mesmo logado (não redireciona para dashboard)
+  const subscriptionRoutes = ['/planos', '/assinar']
+  if (subscriptionRoutes.some(r => pathname === r || pathname.startsWith(r))) {
+    return supabaseResponse
+  }
+
+  // Rotas públicas — não precisa de auth; se logado, redireciona para o dashboard
   const publicRoutes = ['/', '/login', '/auth/callback']
   if (publicRoutes.some(r => pathname === r || (r !== '/' && pathname.startsWith(r)))) {
-    // Se já está logado, redireciona para o dashboard correto
     if (user) {
       const { data: profile } = await supabase
         .from('users')
