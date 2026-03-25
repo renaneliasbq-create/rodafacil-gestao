@@ -7,6 +7,14 @@ import { perguntarAssistente } from './actions-ia'
 
 /* ── Tipos ───────────────────────────────────────────────────────── */
 export type EstadoVoz = 'parado' | 'ouvindo' | 'processando' | 'respondendo' | 'erro'
+type TipoErro = 'sem-audio' | 'sem-conexao' | 'mic-ocupado' | 'generico' | null
+
+const LABELS_ERRO: Record<NonNullable<TipoErro>, string> = {
+  'sem-audio':   'Não ouvi nada. Tente novamente',
+  'sem-conexao': 'Sem conexão. Tente novamente',
+  'mic-ocupado': 'Microfone ocupado. Tente novamente',
+  'generico':    'Não entendi. Tente novamente',
+}
 
 const DIAS_SEMANA = ['dom','seg','ter','qua','qui','sex','sáb']
 
@@ -109,13 +117,13 @@ function SoundWaveIcon() {
 }
 
 /* ── Botão de voz ────────────────────────────────────────────────── */
-function BotaoVoz({ estado, onClick }: { estado: EstadoVoz; onClick: () => void }) {
+function BotaoVoz({ estado, labelErro, onClick }: { estado: EstadoVoz; labelErro: string; onClick: () => void }) {
   const configs: Record<EstadoVoz, { bg: string; label: string; labelColor: string; icon: React.ReactNode }> = {
-    parado:      { bg: 'bg-emerald-600', label: 'Pergunte em voz alta',       labelColor: 'text-gray-500',            icon: <Mic    className="w-9 h-9 text-white" /> },
-    ouvindo:     { bg: 'bg-emerald-500', label: 'Ouvindo...',                  labelColor: 'text-emerald-600 font-semibold', icon: <Mic    className="w-9 h-9 text-white" /> },
-    processando: { bg: 'bg-amber-500',   label: 'Calculando...',               labelColor: 'text-amber-600 font-semibold',   icon: <Loader2 className="w-9 h-9 text-white animate-spin" /> },
-    respondendo: { bg: 'bg-blue-600',    label: 'Toque para parar',            labelColor: 'text-blue-600 font-semibold',    icon: <SoundWaveIcon /> },
-    erro:        { bg: 'bg-red-500',     label: 'Não entendi. Tente novamente',labelColor: 'text-red-500 font-medium',       icon: <MicOff className="w-9 h-9 text-white" /> },
+    parado:      { bg: 'bg-emerald-600', label: 'Pergunte em voz alta',  labelColor: 'text-gray-500',                 icon: <Mic    className="w-9 h-9 text-white" /> },
+    ouvindo:     { bg: 'bg-emerald-500', label: 'Ouvindo...',             labelColor: 'text-emerald-600 font-semibold', icon: <Mic    className="w-9 h-9 text-white" /> },
+    processando: { bg: 'bg-amber-500',   label: 'Calculando...',          labelColor: 'text-amber-600 font-semibold',   icon: <Loader2 className="w-9 h-9 text-white animate-spin" /> },
+    respondendo: { bg: 'bg-blue-600',    label: 'Toque para parar',       labelColor: 'text-blue-600 font-semibold',    icon: <SoundWaveIcon /> },
+    erro:        { bg: 'bg-red-500',     label: labelErro,                labelColor: 'text-red-500 font-medium',       icon: <MicOff className="w-9 h-9 text-white" /> },
   }
   const c = configs[estado]
 
@@ -142,9 +150,26 @@ function BotaoVoz({ estado, onClick }: { estado: EstadoVoz; onClick: () => void 
   )
 }
 
+/* ── Cálculo manual local ────────────────────────────────────────── */
+interface ResultadoManual {
+  ganhoEst:  number | null
+  custoEst:  number | null
+  lucroEst:  number | null
+}
+function calcularManual(horas: number, ctx: ContextoMotorista): ResultadoManual {
+  const vals = Object.values(ctx.ganhoPorHora)
+  const mediaHora = vals.length > 0 ? vals.reduce((s, v) => s + v, 0) / vals.length : null
+  const ganhoEst  = mediaHora != null ? Math.round(mediaHora * horas * 100) / 100 : null
+  // Custo proporcional: despesaMediaDia calculada sobre 8h padrão
+  const custoEst  = ctx.despesaMediaDia > 0 ? Math.round((ctx.despesaMediaDia / 8) * horas * 100) / 100 : null
+  const lucroEst  = ganhoEst != null && custoEst != null ? Math.round((ganhoEst - custoEst) * 100) / 100 : null
+  return { ganhoEst, custoEst, lucroEst }
+}
+
 /* ── Componente principal ────────────────────────────────────────── */
 export function CalcularClient({ contexto }: { contexto: ContextoMotorista }) {
   const [estadoVoz, setEstadoVoz]     = useState<EstadoVoz>('parado')
+  const [tipoErro, setTipoErro]       = useState<TipoErro>(null)
   const [suportaVoz, setSuportaVoz]   = useState<boolean | null>(null)
   const [bannerVisto, setBannerVisto] = useState(true)
   const [transcricao, setTranscricao] = useState<string | null>(null)
@@ -152,14 +177,20 @@ export function CalcularClient({ contexto }: { contexto: ContextoMotorista }) {
   const [erroPerm, setErroPerm]       = useState(false)
   const [tentativas, setTentativas]   = useState(0)
 
+  // Calculadora manual
+  const [horas, setHoras]           = useState('')
+  const [resultManual, setResultManual] = useState<ResultadoManual | null>(null)
+
   const recognitionRef = useRef<SpeechRecognition | null>(null)
+  const timeoutRef     = useRef<ReturnType<typeof setTimeout> | null>(null)
   const vozRef         = useVozPtBR()
 
-  /* ── Detecta suporte ────────────────────────────────────────────── */
+  /* ── Detecta suporte + cleanup ──────────────────────────────────── */
   useEffect(() => {
     setSuportaVoz(!!(window.SpeechRecognition || window.webkitSpeechRecognition))
     const visto = localStorage.getItem('roda_fácil_banner_voz_visto')
     if (!visto) setBannerVisto(false)
+    return () => { clearTimeout(timeoutRef.current!) }
   }, [])
 
   /* ── Falar resposta via SpeechSynthesis ─────────────────────────── */
@@ -199,30 +230,78 @@ export function CalcularClient({ contexto }: { contexto: ContextoMotorista }) {
       setEstadoVoz('ouvindo')
       setTranscricao(null)
       setResposta(null)
+      setTipoErro(null)
       setErroPerm(false)
     }
 
     r.onresult = (event: SpeechRecognitionEvent) => {
-      const texto = event.results[0]?.[0]?.transcript ?? ''
+      const texto = (event.results[0]?.[0]?.transcript ?? '').trim()
+
+      // Texto vazio — não chamar API
+      if (!texto) {
+        setTipoErro('sem-audio')
+        setEstadoVoz('erro')
+        return
+      }
+
       setTranscricao(texto)
       setEstadoVoz('processando')
-      // Chama o Claude com os dados reais do motorista
+
+      // Timeout de segurança: se a server action travar por >10s, mostra erro
+      timeoutRef.current = setTimeout(() => {
+        setTipoErro('generico')
+        setEstadoVoz('erro')
+      }, 10_000)
+
       perguntarAssistente(texto, contexto)
-        .then(resp => setResposta(resp))
-        .catch(() => setEstadoVoz('erro'))
+        .then(resp => {
+          clearTimeout(timeoutRef.current!)
+          setResposta(resp)
+        })
+        .catch(() => {
+          clearTimeout(timeoutRef.current!)
+          setTipoErro('generico')
+          setEstadoVoz('erro')
+        })
     }
 
     r.onerror = (event: SpeechRecognitionErrorEvent) => {
-      if (event.error === 'not-allowed' || event.error === 'service-not-allowed') {
-        setErroPerm(true)
-        setEstadoVoz('parado')
-      } else {
-        setEstadoVoz('erro')
+      switch (event.error) {
+        case 'not-allowed':
+        case 'service-not-allowed':
+          setErroPerm(true)
+          setEstadoVoz('parado')
+          break
+        case 'no-speech':
+          setTipoErro('sem-audio')
+          setEstadoVoz('erro')
+          break
+        case 'network':
+          setTipoErro('sem-conexao')
+          setEstadoVoz('erro')
+          break
+        case 'audio-capture':
+          setTipoErro('mic-ocupado')
+          setEstadoVoz('erro')
+          break
+        case 'aborted':
+          // Parado propositalmente — não é erro
+          break
+        default:
+          setTipoErro('generico')
+          setEstadoVoz('erro')
       }
     }
 
     r.onend = () => {
-      setEstadoVoz(prev => prev === 'ouvindo' ? 'erro' : prev)
+      // Se ainda estava ouvindo quando terminou (sem resultado e sem erro tratado)
+      setEstadoVoz(prev => {
+        if (prev === 'ouvindo') {
+          setTipoErro('sem-audio')
+          return 'erro'
+        }
+        return prev
+      })
     }
 
     return r
@@ -325,7 +404,11 @@ export function CalcularClient({ contexto }: { contexto: ContextoMotorista }) {
         <div className="mx-4 bg-white rounded-3xl border border-gray-100 shadow-sm px-6 py-8 flex flex-col items-center mb-4">
           <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-6">Assistente por voz</p>
 
-          <BotaoVoz estado={estadoVoz} onClick={handleVozClick} />
+          <BotaoVoz
+            estado={estadoVoz}
+            labelErro={tipoErro ? LABELS_ERRO[tipoErro] : LABELS_ERRO['generico']}
+            onClick={handleVozClick}
+          />
 
           {/* O que o motorista disse */}
           {transcricao && (
@@ -376,21 +459,63 @@ export function CalcularClient({ contexto }: { contexto: ContextoMotorista }) {
       {/* Calculadora manual */}
       <div className="mx-4 bg-white rounded-3xl border border-gray-100 shadow-sm px-5 py-5">
         <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-4">Cálculo manual</p>
-        <div className="space-y-3 mb-4">
-          <div>
-            <label className="block text-xs font-semibold text-gray-600 mb-1.5">Quantas horas planeja rodar?</label>
-            <input type="number" inputMode="decimal" placeholder="Ex: 6" min={1} max={16}
-              className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-400 focus:border-transparent" />
-          </div>
-          <div>
-            <label className="block text-xs font-semibold text-gray-600 mb-1.5">Preço do combustível hoje (R$/litro)</label>
-            <input type="number" inputMode="decimal" placeholder="Ex: 5.89" step="0.01" min={1}
-              className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-400 focus:border-transparent" />
-          </div>
+        <div className="mb-4">
+          <label className="block text-xs font-semibold text-gray-600 mb-1.5">Quantas horas planeja rodar?</label>
+          <input
+            type="number"
+            inputMode="decimal"
+            placeholder="Ex: 6"
+            min={1}
+            max={16}
+            value={horas}
+            onChange={e => { setHoras(e.target.value); setResultManual(null) }}
+            className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-400 focus:border-transparent"
+          />
         </div>
-        <button className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-3.5 rounded-xl text-sm transition-colors min-h-[44px]">
+        <button
+          onClick={() => {
+            const h = parseFloat(horas)
+            if (!h || h <= 0 || h > 24) return
+            setResultManual(calcularManual(h, contexto))
+          }}
+          className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-3.5 rounded-xl text-sm transition-colors min-h-[44px]"
+        >
           Calcular
         </button>
+
+        {/* Resultado do cálculo manual */}
+        {resultManual && (
+          <div className="mt-4 bg-gray-50 border border-gray-100 rounded-2xl px-4 py-4 space-y-2">
+            {resultManual.ganhoEst != null ? (
+              <div className="flex justify-between text-sm">
+                <span className="text-gray-500">Ganho estimado</span>
+                <span className="font-semibold text-gray-800">{fmt(resultManual.ganhoEst)}</span>
+              </div>
+            ) : (
+              <p className="text-xs text-amber-600">Sem média de ganho/hora ainda. Registre mais dias.</p>
+            )}
+            {resultManual.custoEst != null && (
+              <div className="flex justify-between text-sm">
+                <span className="text-gray-500">Custo estimado</span>
+                <span className="font-semibold text-gray-800">{fmt(resultManual.custoEst)}</span>
+              </div>
+            )}
+            {resultManual.lucroEst != null && (
+              <>
+                <div className="h-px bg-gray-200 my-1" />
+                <div className="flex justify-between text-sm">
+                  <span className="font-semibold text-gray-700">Lucro estimado</span>
+                  <span className={`font-bold text-base ${resultManual.lucroEst >= 0 ? 'text-emerald-600' : 'text-red-500'}`}>
+                    {fmt(resultManual.lucroEst)}
+                  </span>
+                </div>
+                <p className="text-[10px] text-gray-400 leading-snug pt-1">
+                  Baseado na sua média dos últimos 30 dias. Custo calculado proporcionalmente à jornada padrão de 8h.
+                </p>
+              </>
+            )}
+          </div>
+        )}
       </div>
 
     </div>
