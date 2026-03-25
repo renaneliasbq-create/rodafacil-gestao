@@ -296,10 +296,11 @@ export function BtnRegistrarGanho() {
     <>
       <button
         onClick={() => setOpen(true)}
-        className="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold px-4 py-2.5 rounded-xl transition-colors min-h-[44px]"
+        aria-label="Registrar ganho"
+        className="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold px-3 py-2.5 rounded-xl transition-colors min-h-[44px]"
       >
         <Plus className="w-4 h-4" />
-        Registrar
+        <span className="hidden sm:inline">Registrar</span>
       </button>
 
       {open && <ModalGanho onClose={() => setOpen(false)} />}

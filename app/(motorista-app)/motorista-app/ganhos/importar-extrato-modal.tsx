@@ -598,10 +598,11 @@ export function BtnImportarExtrato() {
     <>
       <button
         onClick={() => setOpen(true)}
-        className="flex items-center gap-2 border border-emerald-300 text-emerald-700 hover:bg-emerald-50 text-sm font-semibold px-4 py-2.5 rounded-xl transition-colors min-h-[44px]"
+        aria-label="Importar extrato"
+        className="flex items-center gap-2 border border-emerald-300 text-emerald-700 hover:bg-emerald-50 text-sm font-semibold px-3 py-2.5 rounded-xl transition-colors min-h-[44px]"
       >
         <Upload className="w-4 h-4" />
-        Importar
+        <span className="hidden sm:inline">Importar</span>
       </button>
       {open && (
         <ImportarExtrato
