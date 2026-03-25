@@ -630,7 +630,7 @@ export function BtnImportarExtratoCard() {
         <div className="w-9 h-9 bg-purple-600 rounded-xl flex items-center justify-center">
           <Upload className="w-4 h-4 text-white" />
         </div>
-        <span className="text-xs font-semibold text-purple-700">Importar</span>
+        <span className="text-xs font-semibold text-purple-700 text-center leading-tight">Importar extrato</span>
       </button>
       {open && (
         <ImportarExtrato
