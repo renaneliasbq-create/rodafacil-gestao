@@ -106,3 +106,55 @@ export async function importarRegistros(
 
   return importados
 }
+
+/**
+ * Retorna as últimas 20 importações do motorista logado,
+ * ordenadas da mais recente para a mais antiga.
+ */
+export async function buscarHistoricoImportacoes() {
+  const supabase = createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return []
+
+  const { data } = await supabase
+    .from('motorista_importacoes')
+    .select('id, plataforma, arquivo_nome, total_registros, registros_importados, registros_ignorados, valor_total_importado, created_at')
+    .eq('motorista_id', user.id)
+    .order('created_at', { ascending: false })
+    .limit(20)
+
+  return data ?? []
+}
+
+/**
+ * Desfaz uma importação:
+ * - Apaga todos os ganhos vinculados ao lote (ON DELETE CASCADE cuida disso)
+ * - Apaga o registro do lote em motorista_importacoes
+ * Só permite desfazer importações do próprio motorista (RLS garante).
+ */
+export async function desfazerImportacao(importacaoId: string): Promise<void> {
+  const supabase = createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) throw new Error('Sessão expirada. Faça login novamente.')
+
+  // Apaga os ganhos do lote
+  const { error: ganhoError } = await supabase
+    .from('motorista_ganhos')
+    .delete()
+    .eq('importacao_id', importacaoId)
+    .eq('motorista_id', user.id)
+
+  if (ganhoError) throw new Error(`Erro ao remover ganhos: ${ganhoError.message}`)
+
+  // Apaga o lote
+  const { error: loteError } = await supabase
+    .from('motorista_importacoes')
+    .delete()
+    .eq('id', importacaoId)
+    .eq('motorista_id', user.id)
+
+  if (loteError) throw new Error(`Erro ao remover importação: ${loteError.message}`)
+
+  revalidatePath('/motorista-app/ganhos')
+  revalidatePath('/motorista-app')
+}
