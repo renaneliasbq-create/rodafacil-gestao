@@ -381,7 +381,6 @@ export function ImportarExtrato({ onClose, onImportado }: Props) {
                 ref={fileInputRef}
                 type="file"
                 accept=".csv,.xlsx"
-                capture="environment"
                 className="hidden"
                 onChange={e => { const f = e.target.files?.[0]; if (f) handleArquivo(f) }}
               />

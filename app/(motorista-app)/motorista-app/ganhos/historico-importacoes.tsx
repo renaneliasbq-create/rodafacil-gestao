@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useTransition } from 'react'
+import { useState, useEffect, useTransition } from 'react'
 import { History, X, Trash2, Loader2, FileText } from 'lucide-react'
 import { fmt } from './ganhos-shared'
 import { buscarHistoricoImportacoes, desfazerImportacao } from './actions-importacao'
@@ -52,12 +52,12 @@ function HistoricoModal({
   const [isPending, startTransition] = useTransition()
 
   // Carrega ao montar
-  useState(() => {
+  useEffect(() => {
     buscarHistoricoImportacoes().then(data => {
       setItems(data as ImportacaoItem[])
       setLoading(false)
     })
-  })
+  }, [])
 
   function handleDesfazer(id: string) {
     if (confirmId !== id) {
@@ -205,10 +205,11 @@ export function BtnHistoricoImportacoes() {
     <>
       <button
         onClick={() => setOpen(true)}
+        aria-label="Histórico de importações"
         className="flex items-center gap-1.5 text-xs font-medium text-gray-500 px-3 py-2 rounded-xl bg-gray-100 active:bg-gray-200 min-h-[44px]"
       >
-        <History className="w-3.5 h-3.5" />
-        Histórico
+        <History className="w-4 h-4" />
+        <span className="hidden sm:inline">Histórico</span>
       </button>
 
       {open && <HistoricoModal onClose={() => setOpen(false)} />}
