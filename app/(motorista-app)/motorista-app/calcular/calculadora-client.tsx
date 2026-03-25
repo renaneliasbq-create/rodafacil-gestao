@@ -1,10 +1,64 @@
 'use client'
 
 import { useState, useEffect, useRef, useCallback } from 'react'
-import { Mic, MicOff, Volume2, Loader2, X, Car, AlertCircle } from 'lucide-react'
+import { Mic, MicOff, Volume2, Loader2, X, Car, AlertCircle, TrendingUp } from 'lucide-react'
+import type { ContextoMotorista } from './actions-calcular'
 
 /* ── Tipos ───────────────────────────────────────────────────────── */
 export type EstadoVoz = 'parado' | 'ouvindo' | 'processando' | 'respondendo' | 'erro'
+
+const DIAS_SEMANA = ['dom','seg','ter','qua','qui','sex','sáb']
+
+function fmt(v: number) {
+  return v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', minimumFractionDigits: 2 })
+}
+
+/* ── Card de contexto disponível ─────────────────────────────────── */
+function CardContexto({ ctx }: { ctx: ContextoMotorista }) {
+  const plats   = Object.keys(ctx.ganhoPorHora)
+  const temDados = ctx.diasHistorico > 0
+
+  if (!temDados) return (
+    <div className="mx-4 mb-4 bg-amber-50 border border-amber-100 rounded-2xl px-4 py-3">
+      <p className="text-xs text-amber-700 font-medium">
+        Sem histórico ainda. Continue registrando seus ganhos para o assistente ter dados reais para responder.
+      </p>
+    </div>
+  )
+
+  return (
+    <div className="mx-4 mb-4 bg-emerald-50 border border-emerald-100 rounded-2xl px-4 py-3">
+      <div className="flex items-center gap-2 mb-2">
+        <TrendingUp className="w-3.5 h-3.5 text-emerald-600" />
+        <p className="text-[10px] font-bold text-emerald-700 uppercase tracking-widest">
+          O assistente já sabe ({ctx.diasHistorico} dias de histórico)
+        </p>
+      </div>
+      <div className="grid grid-cols-2 gap-x-4 gap-y-1">
+        {plats.map(p => (
+          <p key={p} className="text-xs text-emerald-800">
+            <span className="font-semibold capitalize">{p}:</span> {fmt(ctx.ganhoPorHora[p])}/h
+          </p>
+        ))}
+        {ctx.mediaGanhoHoje != null && (
+          <p className="text-xs text-emerald-800 col-span-2">
+            <span className="font-semibold">Média de {ctx.diaSemana}:</span> {fmt(ctx.mediaGanhoHoje)}
+          </p>
+        )}
+        {ctx.despesaMediaDia > 0 && (
+          <p className="text-xs text-emerald-800">
+            <span className="font-semibold">Custo/dia:</span> {fmt(ctx.despesaMediaDia)}
+          </p>
+        )}
+        {ctx.kmPorHora != null && (
+          <p className="text-xs text-emerald-800">
+            <span className="font-semibold">KM/hora:</span> {ctx.kmPorHora} km
+          </p>
+        )}
+      </div>
+    </div>
+  )
+}
 
 declare global {
   interface Window {
@@ -88,7 +142,10 @@ function BotaoVoz({ estado, onClick }: { estado: EstadoVoz; onClick: () => void 
 }
 
 /* ── Componente principal ────────────────────────────────────────── */
-export function CalcularClient() {
+export function CalcularClient({ contexto }: { contexto: ContextoMotorista }) {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const _ctx = contexto // será usado na Etapa 5 para montar o prompt do Claude
+
   const [estadoVoz, setEstadoVoz]     = useState<EstadoVoz>('parado')
   const [suportaVoz, setSuportaVoz]   = useState<boolean | null>(null)
   const [bannerVisto, setBannerVisto] = useState(true)
@@ -215,6 +272,9 @@ export function CalcularClient() {
         </h1>
         <p className="text-sm text-gray-400 mt-1">Pergunte em voz alta ou preencha os campos.</p>
       </div>
+
+      {/* Card de contexto disponível */}
+      <CardContexto ctx={contexto} />
 
       {/* Banner segurança */}
       {!bannerVisto && (
