@@ -1,7 +1,6 @@
 'use client'
 
 import { useState, useRef } from 'react'
-import { useRouter } from 'next/navigation'
 import { X, ChevronLeft, Upload, FileText, CheckCircle2, AlertCircle, Loader2 } from 'lucide-react'
 import { fmt } from './ganhos-shared'
 
@@ -611,10 +610,9 @@ export function ImportarExtrato({ onClose, onImportado }: Props) {
 /* ── Botão de entrada (header) ──────────────────────────────────── */
 export function BtnImportarExtrato() {
   const [open, setOpen] = useState(false)
-  const router = useRouter()
 
   function handleImportado(mesParam: string) {
-    router.push(`/motorista-app/ganhos?mes=${mesParam}`)
+    window.location.href = `/motorista-app/ganhos?mes=${mesParam}`
   }
 
   return (
@@ -640,10 +638,9 @@ export function BtnImportarExtrato() {
 /* ── Card de ação rápida (home do motorista) ────────────────────── */
 export function BtnImportarExtratoCard() {
   const [open, setOpen] = useState(false)
-  const router = useRouter()
 
   function handleImportado(mesParam: string) {
-    router.push(`/motorista-app/ganhos?mes=${mesParam}`)
+    window.location.href = `/motorista-app/ganhos?mes=${mesParam}`
   }
 
   return (
