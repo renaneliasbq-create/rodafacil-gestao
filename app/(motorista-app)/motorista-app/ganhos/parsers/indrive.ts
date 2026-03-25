@@ -29,13 +29,14 @@ const COL_TIPO = [
   'categoria', 'descricao', 'description', 'type', 'servico', 'serviço',
 ]
 const COL_BRUTO = [
-  'valor total', 'total amount', 'valor bruto', 'tarifa', 'gross',
+  'valor negociado', 'valor total', 'total amount', 'valor bruto', 'tarifa', 'gross',
   'valor da corrida', 'fare', 'amount', 'gross fare', 'preco', 'preço',
+  'negotiated value', 'trip value',
 ]
 const COL_LIQUIDO = [
-  'valor recebido', 'your earnings', 'repasse', 'ganhos', 'net',
-  'valor liquido', 'seus ganhos', 'net earnings', 'earnings', 'liquido',
-  'valor pago', 'valor repassado', 'recebido',
+  'seu ganho', 'seus ganhos', 'valor recebido', 'your earnings', 'repasse', 'ganhos', 'net',
+  'valor liquido', 'net earnings', 'earnings', 'liquido',
+  'valor pago', 'valor repassado', 'recebido', 'driver earnings',
 ]
 const COL_DURACAO = [
   'duracao', 'duração', 'duration', 'tempo', 'time',
