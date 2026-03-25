@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { Mic, MicOff, Volume2, Loader2, X, Car, AlertCircle, TrendingUp } from 'lucide-react'
 import type { ContextoMotorista } from './actions-calcular'
+import { perguntarAssistente } from './actions-ia'
 
 /* ── Tipos ───────────────────────────────────────────────────────── */
 export type EstadoVoz = 'parado' | 'ouvindo' | 'processando' | 'respondendo' | 'erro'
@@ -143,9 +144,6 @@ function BotaoVoz({ estado, onClick }: { estado: EstadoVoz; onClick: () => void 
 
 /* ── Componente principal ────────────────────────────────────────── */
 export function CalcularClient({ contexto }: { contexto: ContextoMotorista }) {
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const _ctx = contexto // será usado na Etapa 5 para montar o prompt do Claude
-
   const [estadoVoz, setEstadoVoz]     = useState<EstadoVoz>('parado')
   const [suportaVoz, setSuportaVoz]   = useState<boolean | null>(null)
   const [bannerVisto, setBannerVisto] = useState(true)
@@ -208,12 +206,10 @@ export function CalcularClient({ contexto }: { contexto: ContextoMotorista }) {
       const texto = event.results[0]?.[0]?.transcript ?? ''
       setTranscricao(texto)
       setEstadoVoz('processando')
-      // Etapa 5 substituirá isso pela chamada ao Claude
-      // Por agora: placeholder que dispara o TTS para validar o fluxo
-      setTimeout(() => {
-        const placeholder = 'Recebi sua pergunta. Em breve vou responder com seus dados reais assim que a integração com inteligência artificial estiver pronta.'
-        setResposta(placeholder)
-      }, 800)
+      // Chama o Claude com os dados reais do motorista
+      perguntarAssistente(texto, contexto)
+        .then(resp => setResposta(resp))
+        .catch(() => setEstadoVoz('erro'))
     }
 
     r.onerror = (event: SpeechRecognitionErrorEvent) => {
