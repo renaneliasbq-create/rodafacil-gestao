@@ -1,10 +1,18 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { Mic, MicOff, Volume2, Loader2, X, Car } from 'lucide-react'
+import { useState, useEffect, useRef, useCallback } from 'react'
+import { Mic, MicOff, Volume2, Loader2, X, Car, AlertCircle } from 'lucide-react'
 
 /* ── Tipos ───────────────────────────────────────────────────────── */
 export type EstadoVoz = 'parado' | 'ouvindo' | 'processando' | 'respondendo' | 'erro'
+
+/* ── Declaração de tipos para a Web Speech API ───────────────────── */
+declare global {
+  interface Window {
+    SpeechRecognition: new () => SpeechRecognition
+    webkitSpeechRecognition: new () => SpeechRecognition
+  }
+}
 
 /* ── Ícone de ondas sonoras (estado "respondendo") ───────────────── */
 function SoundWaveIcon() {
@@ -34,42 +42,41 @@ function SoundWaveIcon() {
 function BotaoVoz({
   estado,
   onClick,
+  disabled = false,
 }: {
   estado: EstadoVoz
   onClick: () => void
+  disabled?: boolean
 }) {
-  const configs = {
+  const configs: Record<EstadoVoz, {
+    bg: string; label: string; labelColor: string; icon: React.ReactNode
+  }> = {
     parado: {
       bg: 'bg-emerald-600',
-      ring: '',
       label: 'Pergunte em voz alta',
       labelColor: 'text-gray-500',
       icon: <Mic className="w-9 h-9 text-white" />,
     },
     ouvindo: {
       bg: 'bg-emerald-500',
-      ring: 'ring-4 ring-emerald-300 ring-offset-2',
       label: 'Ouvindo...',
       labelColor: 'text-emerald-600 font-semibold',
       icon: <Mic className="w-9 h-9 text-white" />,
     },
     processando: {
       bg: 'bg-amber-500',
-      ring: '',
       label: 'Calculando...',
       labelColor: 'text-amber-600 font-semibold',
       icon: <Loader2 className="w-9 h-9 text-white animate-spin" />,
     },
     respondendo: {
       bg: 'bg-blue-600',
-      ring: '',
-      label: 'Respondendo...',
+      label: 'Toque para parar',
       labelColor: 'text-blue-600 font-semibold',
       icon: <SoundWaveIcon />,
     },
     erro: {
       bg: 'bg-red-500',
-      ring: '',
       label: 'Não entendi. Tente novamente',
       labelColor: 'text-red-500 font-medium',
       icon: <MicOff className="w-9 h-9 text-white" />,
@@ -80,7 +87,6 @@ function BotaoVoz({
 
   return (
     <div className="flex flex-col items-center gap-3">
-      {/* Anel pulsante visível apenas no estado "ouvindo" */}
       <div className="relative flex items-center justify-center">
         {estado === 'ouvindo' && (
           <>
@@ -90,17 +96,18 @@ function BotaoVoz({
         )}
         <button
           onClick={onClick}
+          disabled={disabled || estado === 'processando'}
           aria-label={c.label}
           className={`
             relative z-10 w-[80px] h-[80px] rounded-full flex items-center justify-center
             shadow-lg active:scale-95 transition-transform
-            ${c.bg} ${c.ring}
+            disabled:opacity-60 disabled:cursor-not-allowed
+            ${c.bg}
           `}
         >
           {c.icon}
         </button>
       </div>
-
       <p className={`text-sm text-center min-h-[20px] transition-all ${c.labelColor}`}>
         {c.label}
       </p>
@@ -110,33 +117,115 @@ function BotaoVoz({
 
 /* ── Componente principal ────────────────────────────────────────── */
 export function CalcularClient() {
-  const [estadoVoz, setEstadoVoz] = useState<EstadoVoz>('parado')
-  const [bannerVisto, setBannerVisto] = useState(true) // true = já foi visto (oculto)
-  const [resposta, setResposta] = useState<string | null>(null)
+  const [estadoVoz, setEstadoVoz]       = useState<EstadoVoz>('parado')
+  const [suportaVoz, setSuportaVoz]     = useState<boolean | null>(null) // null = ainda verificando
+  const [bannerVisto, setBannerVisto]   = useState(true)
+  const [transcricao, setTranscricao]   = useState<string | null>(null)
+  const [resposta, setResposta]         = useState<string | null>(null)
+  const [erroPerm, setErroPerm]         = useState(false)
+  const [tentativas, setTentativas]     = useState(0)
 
-  // Verifica se é a primeira vez — mostra banner
+  const recognitionRef = useRef<SpeechRecognition | null>(null)
+
+  /* ── Verifica suporte do navegador ─────────────────────────────── */
   useEffect(() => {
+    const suporta = !!(window.SpeechRecognition || window.webkitSpeechRecognition)
+    setSuportaVoz(suporta)
+
     const visto = localStorage.getItem('roda_fácil_banner_voz_visto')
     if (!visto) setBannerVisto(false)
   }, [])
+
+  /* ── Inicializa o reconhecimento de voz ─────────────────────────── */
+  const criarRecognition = useCallback(() => {
+    const SR = window.SpeechRecognition || window.webkitSpeechRecognition
+    if (!SR) return null
+
+    const r = new SR()
+    r.lang              = 'pt-BR'
+    r.continuous        = false
+    r.interimResults    = false
+    r.maxAlternatives   = 1
+
+    r.onstart = () => {
+      setEstadoVoz('ouvindo')
+      setTranscricao(null)
+      setResposta(null)
+      setErroPerm(false)
+    }
+
+    r.onresult = (event: SpeechRecognitionEvent) => {
+      const texto = event.results[0]?.[0]?.transcript ?? ''
+      setTranscricao(texto)
+      setEstadoVoz('processando')
+      // Etapa 5 vai substituir isso pela chamada ao Claude
+      // Por agora só exibe a transcrição como placeholder
+      setTimeout(() => {
+        setEstadoVoz('respondendo')
+        setResposta(null) // será preenchido pela IA na Etapa 5
+      }, 800)
+    }
+
+    r.onerror = (event: SpeechRecognitionErrorEvent) => {
+      if (event.error === 'not-allowed' || event.error === 'service-not-allowed') {
+        setErroPerm(true)
+        setEstadoVoz('parado')
+      } else if (event.error === 'no-speech') {
+        setEstadoVoz('erro')
+      } else {
+        setEstadoVoz('erro')
+      }
+    }
+
+    r.onend = () => {
+      // Se ainda estava ouvindo (sem resultado capturado), vira erro
+      setEstadoVoz(prev => prev === 'ouvindo' ? 'erro' : prev)
+    }
+
+    return r
+  }, [])
+
+  /* ── Toque no botão ─────────────────────────────────────────────── */
+  function handleVozClick() {
+    // Parar fala em andamento
+    if (estadoVoz === 'respondendo') {
+      window.speechSynthesis?.cancel()
+      setEstadoVoz('parado')
+      return
+    }
+
+    // Parar escuta em andamento
+    if (estadoVoz === 'ouvindo') {
+      recognitionRef.current?.stop()
+      setEstadoVoz('parado')
+      return
+    }
+
+    // Após 2 erros consecutivos, sugere digitar
+    if (estadoVoz === 'erro') {
+      setTentativas(t => t + 1)
+    } else {
+      setTentativas(0)
+    }
+
+    // Iniciar nova escuta
+    const r = criarRecognition()
+    if (!r) return
+    recognitionRef.current = r
+
+    try {
+      r.start()
+    } catch {
+      setEstadoVoz('erro')
+    }
+  }
 
   function fecharBanner() {
     localStorage.setItem('roda_fácil_banner_voz_visto', '1')
     setBannerVisto(true)
   }
 
-  // Cicla pelos estados para visualização na Etapa 1
-  // (será substituído pela lógica real nas etapas seguintes)
-  function handleVozClick() {
-    if (estadoVoz === 'respondendo') {
-      setEstadoVoz('parado')
-      return
-    }
-    const sequencia: EstadoVoz[] = ['parado', 'ouvindo', 'processando', 'respondendo']
-    const idx = sequencia.indexOf(estadoVoz)
-    setEstadoVoz(sequencia[(idx + 1) % sequencia.length])
-  }
-
+  /* ── Render ─────────────────────────────────────────────────────── */
   return (
     <div className="pb-6">
 
@@ -166,47 +255,103 @@ export function CalcularClient() {
         </div>
       )}
 
-      {/* ── Botão de voz ── */}
-      <div className="mx-4 bg-white rounded-3xl border border-gray-100 shadow-sm px-6 py-8 flex flex-col items-center mb-4">
-        <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-6">
-          Assistente por voz
-        </p>
-
-        <BotaoVoz estado={estadoVoz} onClick={handleVozClick} />
-
-        {/* Área de resposta */}
-        {resposta && (
-          <div className="mt-6 w-full bg-blue-50 border border-blue-100 rounded-2xl px-4 py-4">
-            <p className="text-sm text-blue-900 leading-relaxed">{resposta}</p>
-            <button className="mt-2 flex items-center gap-1.5 text-xs text-blue-500 font-medium">
-              <Volume2 className="w-3.5 h-3.5" />
-              Ouvir novamente
-            </button>
-          </div>
-        )}
-
-        {/* Sugestões de perguntas */}
-        {estadoVoz === 'parado' && !resposta && (
-          <div className="mt-6 w-full space-y-2">
-            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest text-center mb-3">
-              Você pode perguntar
+      {/* ── Aviso: navegador sem suporte ── */}
+      {suportaVoz === false && (
+        <div className="mx-4 mb-4 bg-gray-50 border border-gray-200 rounded-2xl px-4 py-4 flex items-start gap-3">
+          <AlertCircle className="w-5 h-5 text-gray-400 flex-shrink-0 mt-0.5" />
+          <div>
+            <p className="text-sm font-semibold text-gray-700">Assistente de voz indisponível</p>
+            <p className="text-xs text-gray-500 mt-1 leading-snug">
+              Seu navegador não suporta reconhecimento de voz. Use o{' '}
+              <strong>Chrome</strong> para acessar essa funcionalidade.
             </p>
-            {[
-              '"Vale a pena rodar hoje?"',
-              '"Quanto preciso faturar?"',
-              '"Qual plataforma compensa mais?"',
-              '"Quanto vou gastar de combustível?"',
-            ].map(q => (
-              <div
-                key={q}
-                className="text-xs text-gray-500 bg-gray-50 rounded-xl px-3 py-2.5 text-center italic"
-              >
-                {q}
-              </div>
-            ))}
           </div>
-        )}
-      </div>
+        </div>
+      )}
+
+      {/* ── Aviso: permissão de microfone negada ── */}
+      {erroPerm && (
+        <div className="mx-4 mb-4 bg-red-50 border border-red-100 rounded-2xl px-4 py-4 flex items-start gap-3">
+          <MicOff className="w-5 h-5 text-red-400 flex-shrink-0 mt-0.5" />
+          <div>
+            <p className="text-sm font-semibold text-red-700">Microfone bloqueado</p>
+            <p className="text-xs text-red-500 mt-1 leading-snug">
+              Permita o acesso ao microfone nas configurações do navegador para usar o assistente.
+              <br />
+              <strong>Android:</strong> Configurações → Site → Microfone → Permitir
+              <br />
+              <strong>iPhone:</strong> Ajustes → Chrome → Microfone → Ativar
+            </p>
+          </div>
+        </div>
+      )}
+
+      {/* ── Sugestão de usar teclado após 2 falhas ── */}
+      {tentativas >= 2 && estadoVoz === 'erro' && (
+        <div className="mx-4 mb-4 bg-blue-50 border border-blue-100 rounded-2xl px-4 py-3">
+          <p className="text-xs text-blue-700">
+            Está com dificuldade? Use a calculadora manual abaixo.
+          </p>
+        </div>
+      )}
+
+      {/* ── Botão de voz ── */}
+      {suportaVoz !== false && (
+        <div className="mx-4 bg-white rounded-3xl border border-gray-100 shadow-sm px-6 py-8 flex flex-col items-center mb-4">
+          <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-6">
+            Assistente por voz
+          </p>
+
+          <BotaoVoz
+            estado={estadoVoz}
+            onClick={handleVozClick}
+          />
+
+          {/* Transcrição capturada */}
+          {transcricao && (
+            <div className="mt-5 w-full bg-gray-50 border border-gray-100 rounded-2xl px-4 py-3">
+              <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Você disse</p>
+              <p className="text-sm text-gray-800 italic">&ldquo;{transcricao}&rdquo;</p>
+            </div>
+          )}
+
+          {/* Área de resposta */}
+          {resposta && (
+            <div className="mt-3 w-full bg-blue-50 border border-blue-100 rounded-2xl px-4 py-4">
+              <p className="text-sm text-blue-900 leading-relaxed">{resposta}</p>
+              <button
+                onClick={() => window.speechSynthesis?.speak(new SpeechSynthesisUtterance(resposta))}
+                className="mt-2 flex items-center gap-1.5 text-xs text-blue-500 font-medium min-h-[36px]"
+              >
+                <Volume2 className="w-3.5 h-3.5" />
+                Ouvir novamente
+              </button>
+            </div>
+          )}
+
+          {/* Sugestões — só quando parado e sem transcrição */}
+          {estadoVoz === 'parado' && !transcricao && (
+            <div className="mt-6 w-full space-y-2">
+              <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest text-center mb-3">
+                Você pode perguntar
+              </p>
+              {[
+                '"Vale a pena rodar hoje?"',
+                '"Quanto preciso faturar?"',
+                '"Qual plataforma compensa mais?"',
+                '"Quanto vou gastar de combustível?"',
+              ].map(q => (
+                <div
+                  key={q}
+                  className="text-xs text-gray-500 bg-gray-50 rounded-xl px-3 py-2.5 text-center italic"
+                >
+                  {q}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
 
       {/* ── Divider ── */}
       <div className="flex items-center gap-3 mx-4 mb-4">
@@ -251,9 +396,7 @@ export function CalcularClient() {
           </div>
         </div>
 
-        <button
-          className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-3.5 rounded-xl text-sm transition-colors min-h-[44px]"
-        >
+        <button className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-3.5 rounded-xl text-sm transition-colors min-h-[44px]">
           Calcular
         </button>
       </div>
