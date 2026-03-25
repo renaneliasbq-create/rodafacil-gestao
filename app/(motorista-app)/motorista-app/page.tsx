@@ -2,7 +2,7 @@ import { createClient } from '@/lib/supabase/server'
 import Link from 'next/link'
 import {
   TrendingUp, ArrowUpCircle, Gauge, Bell, ChevronRight,
-  TrendingDown, Car, Plus, AlertTriangle,
+  TrendingDown, Car, Plus, AlertTriangle, Mic,
 } from 'lucide-react'
 import { BtnImportarExtratoCard } from './ganhos/importar-extrato-modal'
 
@@ -166,6 +166,24 @@ export default async function MotoristaAppDashboard() {
           </div>
         </div>
       </div>
+
+      {/* ── Assistente de voz ── */}
+      <Link
+        href="/motorista-app/calcular"
+        className="mx-4 mb-4 flex items-center gap-4 rounded-2xl bg-gradient-to-r from-emerald-600 to-teal-600 px-5 py-4 shadow-lg shadow-emerald-200 active:opacity-90 transition-opacity"
+      >
+        <div className="relative flex-shrink-0">
+          <span className="absolute inset-0 rounded-full bg-white/20 animate-ping" />
+          <div className="relative w-11 h-11 rounded-full bg-white/20 flex items-center justify-center">
+            <Mic className="w-5 h-5 text-white" />
+          </div>
+        </div>
+        <div className="flex-1 min-w-0">
+          <p className="text-white font-bold text-sm leading-tight">Vale a pena rodar hoje?</p>
+          <p className="text-emerald-100 text-xs mt-0.5">Pergunte ao assistente por voz</p>
+        </div>
+        <ChevronRight className="w-5 h-5 text-white/70 flex-shrink-0" />
+      </Link>
 
       {/* ── Indicadores rápidos ── */}
       <div className="grid grid-cols-3 gap-3 mx-4 mb-4">
