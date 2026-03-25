@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { TrendingUp, Calendar } from 'lucide-react'
 import { BtnRegistrarGanho, BtnDeletarGanho, FiltroPlatforma, NavMes } from './ganhos-client'
+import { BtnImportarExtrato } from './importar-extrato-modal'
 import { BADGE, fmt, labelPlataforma } from './ganhos-shared'
 import { GanhosWeeklyChart } from './ganhos-weekly-chart'
 import { GanhosMetaCard } from './ganhos-meta-card'
@@ -178,7 +179,10 @@ export default async function GanhosPage({
           <h1 className="text-2xl font-extrabold text-gray-900">Ganhos</h1>
           <NavMes mes={mes} ano={ano} label={mesLabel} />
         </div>
-        <BtnRegistrarGanho />
+        <div className="flex items-center gap-2">
+          <BtnImportarExtrato />
+          <BtnRegistrarGanho />
+        </div>
       </div>
 
       {/* ── Card verde de resumo ── */}
