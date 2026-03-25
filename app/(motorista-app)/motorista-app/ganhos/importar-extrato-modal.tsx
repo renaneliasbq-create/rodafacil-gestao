@@ -68,6 +68,70 @@ const PLATAFORMAS = [
   },
 ]
 
+/* ── Badge de plataforma ────────────────────────────────────────── */
+const PLAT_BADGE: Record<string, string> = {
+  uber:    'bg-black text-white',
+  '99':    'bg-yellow-400 text-yellow-900',
+  ifood:   'bg-red-500 text-white',
+}
+const PLAT_LABEL: Record<string, string> = {
+  uber: 'Uber', '99': '99', ifood: 'iFood',
+}
+
+/* ── Card de registro no preview ────────────────────────────────── */
+function RegistroCard({
+  registro: r,
+  isDuplicado = false,
+}: {
+  registro: RegistroImportado
+  isDuplicado?: boolean
+}) {
+  return (
+    <div className={`flex items-center gap-3 px-3 py-2.5 rounded-xl border ${
+      isDuplicado ? 'bg-gray-50 border-gray-100' : 'bg-white border-gray-100 shadow-sm'
+    }`}>
+      {/* Badge plataforma */}
+      <span className={`text-[9px] font-extrabold px-1.5 py-0.5 rounded-md flex-shrink-0 ${PLAT_BADGE[r.plataforma] ?? 'bg-gray-400 text-white'}`}>
+        {PLAT_LABEL[r.plataforma] ?? r.plataforma}
+      </span>
+
+      {/* Dados */}
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center gap-1.5 flex-wrap">
+          <p className="text-xs font-semibold text-gray-800">
+            {new Date(r.data + 'T12:00:00').toLocaleDateString('pt-BR', {
+              day: '2-digit', month: 'short',
+            })}
+          </p>
+          <span className="text-[10px] text-gray-400 capitalize">{r.tipo}</span>
+          {r.horas_trabalhadas != null && (
+            <span className="text-[10px] text-gray-400">{r.horas_trabalhadas}h</span>
+          )}
+        </div>
+        <div className="flex items-center gap-2 mt-0.5">
+          <p className={`text-sm font-bold ${isDuplicado ? 'text-gray-500' : 'text-emerald-700'}`}>
+            {fmt(r.valor_liquido)}
+          </p>
+          {r.valor_bruto !== r.valor_liquido && (
+            <p className="text-[10px] text-gray-400">bruto {fmt(r.valor_bruto)}</p>
+          )}
+        </div>
+      </div>
+
+      {/* Status */}
+      {isDuplicado ? (
+        <span className="text-[9px] font-bold bg-gray-200 text-gray-500 px-2 py-0.5 rounded-full flex-shrink-0 whitespace-nowrap">
+          Já existe
+        </span>
+      ) : (
+        <span className="text-[9px] font-bold bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full flex-shrink-0">
+          Novo
+        </span>
+      )}
+    </div>
+  )
+}
+
 /* ── Componente principal ───────────────────────────────────────── */
 interface Props {
   onClose: () => void
@@ -341,70 +405,78 @@ export function ImportarExtrato({ onClose, onImportado }: Props) {
           {/* ── PASSO 4: Preview ───────────────────────────────── */}
           {step === 4 && (
             <div>
-              {/* Resumo */}
-              <div className="grid grid-cols-3 gap-2 mb-4">
+              {/* Cards de resumo */}
+              <div className="grid grid-cols-3 gap-2 mb-3">
                 <div className="bg-gray-50 rounded-xl p-3 text-center">
                   <p className="text-lg font-extrabold text-gray-900">{registros.length}</p>
-                  <p className="text-[10px] text-gray-400 font-medium mt-0.5">encontrados</p>
+                  <p className="text-[10px] text-gray-400 font-medium mt-0.5">no arquivo</p>
                 </div>
                 <div className="bg-emerald-50 rounded-xl p-3 text-center">
                   <p className="text-lg font-extrabold text-emerald-700">{novos.length}</p>
                   <p className="text-[10px] text-emerald-600 font-medium mt-0.5">novos</p>
                 </div>
                 <div className="bg-gray-50 rounded-xl p-3 text-center">
-                  <p className="text-lg font-extrabold text-gray-500">{duplicados.length}</p>
+                  <p className="text-lg font-extrabold text-gray-400">{duplicados.length}</p>
                   <p className="text-[10px] text-gray-400 font-medium mt-0.5">já existem</p>
                 </div>
               </div>
 
+              {/* Banner de total */}
               {novos.length > 0 && (
-                <div className="bg-emerald-50 border border-emerald-100 rounded-xl px-4 py-2.5 mb-4 flex items-center justify-between">
-                  <p className="text-sm font-semibold text-emerald-700">Total a importar</p>
-                  <p className="text-sm font-extrabold text-emerald-700">{fmt(totalLiq)}</p>
+                <div className="bg-emerald-600 rounded-xl px-4 py-3 mb-4 flex items-center justify-between">
+                  <div>
+                    <p className="text-emerald-100 text-[10px] font-semibold uppercase tracking-wide">Valor líquido total</p>
+                    <p className="text-white font-extrabold text-lg leading-tight">{fmt(totalLiq)}</p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-emerald-100 text-[10px] font-semibold uppercase tracking-wide">A importar</p>
+                    <p className="text-white font-bold text-base">{novos.length} registro{novos.length !== 1 ? 's' : ''}</p>
+                  </div>
                 </div>
               )}
 
-              {/* Lista de registros */}
-              <div className="space-y-2">
-                {registros.map((r, i) => (
-                  <div
-                    key={i}
-                    className={`flex items-center gap-3 px-3 py-2.5 rounded-xl border ${
-                      r.duplicado ? 'bg-gray-50 border-gray-100 opacity-60' : 'bg-white border-gray-100'
-                    }`}
-                  >
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-0.5">
-                        <p className="text-xs font-semibold text-gray-700">
-                          {new Date(r.data + 'T12:00:00').toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })}
-                        </p>
-                        <span className="text-[10px] text-gray-400">{r.tipo}</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <p className="text-sm font-bold text-emerald-700">{fmt(r.valor_liquido)}</p>
-                        <p className="text-xs text-gray-400">bruto: {fmt(r.valor_bruto)}</p>
-                        {r.horas_trabalhadas && (
-                          <p className="text-xs text-gray-400">{r.horas_trabalhadas}h</p>
-                        )}
-                      </div>
-                    </div>
-                    {r.duplicado ? (
-                      <span className="text-[10px] font-bold bg-gray-200 text-gray-500 px-2 py-0.5 rounded-full flex-shrink-0">
-                        Já existe
-                      </span>
-                    ) : (
-                      <span className="text-[10px] font-bold bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full flex-shrink-0">
-                        Novo
-                      </span>
-                    )}
+              {/* ── Registros NOVOS ── */}
+              {novos.length > 0 && (
+                <div className="mb-4">
+                  <p className="text-[10px] font-bold text-emerald-700 uppercase tracking-widest mb-2 flex items-center gap-1.5">
+                    <span className="w-2 h-2 bg-emerald-500 rounded-full inline-block" />
+                    {novos.length} novo{novos.length !== 1 ? 's' : ''} para importar
+                  </p>
+                  <div className="space-y-1.5">
+                    {novos.map((r, i) => (
+                      <RegistroCard key={i} registro={r} />
+                    ))}
                   </div>
-                ))}
-              </div>
+                </div>
+              )}
 
+              {/* ── Registros DUPLICADOS ── */}
+              {duplicados.length > 0 && (
+                <div>
+                  <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2 flex items-center gap-1.5">
+                    <span className="w-2 h-2 bg-gray-300 rounded-full inline-block" />
+                    {duplicados.length} já existente{duplicados.length !== 1 ? 's' : ''} (serão ignorados)
+                  </p>
+                  <div className="space-y-1.5 opacity-50">
+                    {duplicados.map((r, i) => (
+                      <RegistroCard key={i} registro={r} isDuplicado />
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Sem novos */}
               {novos.length === 0 && (
-                <div className="text-center py-6">
-                  <p className="text-sm font-semibold text-gray-600">Todos os registros já foram importados anteriormente.</p>
-                  <p className="text-xs text-gray-400 mt-1">Nenhum lançamento novo para adicionar.</p>
+                <div className="flex flex-col items-center text-center py-8">
+                  <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center mb-3">
+                    <CheckCircle2 className="w-6 h-6 text-gray-400" />
+                  </div>
+                  <p className="text-sm font-semibold text-gray-600">
+                    Tudo já importado!
+                  </p>
+                  <p className="text-xs text-gray-400 mt-1 max-w-[220px]">
+                    Todos os {registros.length} registros do arquivo já existem nos seus ganhos.
+                  </p>
                 </div>
               )}
             </div>
@@ -412,16 +484,44 @@ export function ImportarExtrato({ onClose, onImportado }: Props) {
 
           {/* ── PASSO 5: Sucesso ───────────────────────────────── */}
           {step === 5 && (
-            <div className="flex flex-col items-center text-center py-6">
+            <div className="flex flex-col items-center text-center py-4">
               <div className="w-16 h-16 bg-emerald-100 rounded-full flex items-center justify-center mb-4">
                 <CheckCircle2 className="w-8 h-8 text-emerald-600" />
               </div>
-              <h3 className="text-xl font-extrabold text-gray-900 mb-2">
-                {importadosCount} lançamento{importadosCount !== 1 ? 's' : ''} importado{importadosCount !== 1 ? 's' : ''}!
+              <h3 className="text-xl font-extrabold text-gray-900 mb-1">
+                Importação concluída!
               </h3>
-              <p className="text-sm text-gray-500">
-                Seus ganhos da {platInfo?.nome ?? plataforma} foram adicionados com sucesso.
+              <p className="text-sm text-gray-500 mb-6">
+                {importadosCount} lançamento{importadosCount !== 1 ? 's' : ''} da {platInfo?.nome ?? plataforma} adicionado{importadosCount !== 1 ? 's' : ''} com sucesso.
               </p>
+
+              {/* Resumo final */}
+              <div className="w-full bg-gray-50 rounded-2xl p-4 space-y-3 text-left">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs text-gray-500">Plataforma</span>
+                  <span className={`text-[10px] font-bold px-2.5 py-1 rounded-full ${platInfo?.cor ?? 'bg-gray-200 text-gray-700'}`}>
+                    {platInfo?.nome}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-xs text-gray-500">Registros importados</span>
+                  <span className="text-sm font-bold text-gray-900">{importadosCount}</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-xs text-gray-500">Valor líquido total</span>
+                  <span className="text-sm font-bold text-emerald-700">{fmt(totalLiq)}</span>
+                </div>
+                {duplicados.length > 0 && (
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs text-gray-500">Ignorados (já existiam)</span>
+                    <span className="text-sm font-medium text-gray-400">{duplicados.length}</span>
+                  </div>
+                )}
+                <div className="flex items-center justify-between">
+                  <span className="text-xs text-gray-500">Arquivo</span>
+                  <span className="text-xs text-gray-400 truncate max-w-[160px]">{arquivo?.name}</span>
+                </div>
+              </div>
             </div>
           )}
         </div>
