@@ -1,16 +1,52 @@
 /**
- * Ponto de entrada dos parsers de CSV por plataforma.
- * Cada parser é implementado nas Etapas 2, 3 e 4.
+ * Roteador de parsers por plataforma.
+ * Após o parse, chama o servidor para detectar duplicatas.
  */
 import type { PlataformaImport, RegistroImportado } from '../importar-extrato-modal'
+import { chaveDuplicata } from './utils'
+import { verificarDuplicatas } from '../actions-importacao'
 
 export async function parsearCSV(
   arquivo: File,
   plataforma: PlataformaImport,
 ): Promise<RegistroImportado[]> {
-  // Etapas 2-4 implementarão os parsers reais.
-  // Por enquanto lança erro amigável para qualquer arquivo.
-  throw new Error(
-    `Parser da ${plataforma === 'uber' ? 'Uber' : plataforma === '99' ? '99' : 'iFood'} ainda não implementado. Aguarde as próximas etapas.`,
+  const conteudo = await arquivo.text()
+
+  // ── Seleciona o parser correto ───────────────────────────────────
+  let registrosRaw: Omit<RegistroImportado, 'duplicado'>[]
+
+  if (plataforma === 'uber') {
+    const { parsearUber } = await import('./uber')
+    registrosRaw = parsearUber(conteudo)
+  } else if (plataforma === '99') {
+    // Etapa 3
+    throw new Error(
+      'Não conseguimos ler este arquivo. Verifique se é o extrato correto da 99 em formato CSV. (Parser em breve)',
+    )
+  } else if (plataforma === 'ifood') {
+    // Etapa 4
+    throw new Error(
+      'Não conseguimos ler este arquivo. Verifique se é o extrato correto do iFood em formato CSV. (Parser em breve)',
+    )
+  } else {
+    throw new Error('Plataforma não reconhecida.')
+  }
+
+  // ── Verifica duplicatas no servidor ─────────────────────────────
+  const chavesExistentes = await verificarDuplicatas(
+    registrosRaw.map(r => ({
+      data: r.data,
+      valor_liquido: r.valor_liquido,
+      plataforma: r.plataforma,
+    })),
   )
+  const setExistentes = new Set(chavesExistentes)
+
+  // ── Monta resultado final com flag de duplicata ──────────────────
+  return registrosRaw.map(r => ({
+    ...r,
+    duplicado: setExistentes.has(
+      chaveDuplicata(r.data, r.valor_liquido, r.plataforma),
+    ),
+  }))
 }
