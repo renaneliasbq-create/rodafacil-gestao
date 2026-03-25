@@ -1,6 +1,7 @@
 'use server'
 
 import Anthropic from '@anthropic-ai/sdk'
+import { createClient } from '@/lib/supabase/server'
 import type { ContextoMotorista } from './actions-calcular'
 
 const client = new Anthropic() // lê ANTHROPIC_API_KEY automaticamente
@@ -123,6 +124,22 @@ function respostaLocal(pergunta: string, ctx: ContextoMotorista): string {
   return `Com ${ctx.diasHistorico} dias de histórico, seu custo médio diário é ${fmt(ctx.despesaMediaDia)}. Continue registrando para análises mais completas.`
 }
 
+/* ── Salva no histórico (fire-and-forget, nunca bloqueia) ────────── */
+async function salvarHistorico(pergunta: string, resposta: string) {
+  try {
+    const supabase = createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return
+    await supabase.from('motorista_voz_historico').insert({
+      motorista_id: user.id,
+      pergunta,
+      resposta,
+    })
+  } catch {
+    // Silencioso — histórico é opcional, não pode travar a resposta
+  }
+}
+
 /* ── Ação principal ──────────────────────────────────────────────── */
 export async function perguntarAssistente(
   pergunta: string,
@@ -130,7 +147,9 @@ export async function perguntarAssistente(
 ): Promise<string> {
   // Se não há chave configurada, usa fallback local
   if (!process.env.ANTHROPIC_API_KEY) {
-    return respostaLocal(pergunta, contexto)
+    const resp = respostaLocal(pergunta, contexto)
+    salvarHistorico(pergunta, resp)   // não aguarda
+    return resp
   }
 
   try {
@@ -180,11 +199,14 @@ FORA DOS GRUPOS: responda o que puder com os dados disponíveis e sugira uma das
     })
 
     const bloco = message.content.find(b => b.type === 'text')
-    if (bloco?.type === 'text' && bloco.text.trim()) return bloco.text.trim()
-    return respostaLocal(pergunta, contexto)
+    const texto = bloco?.type === 'text' && bloco.text.trim() ? bloco.text.trim() : respostaLocal(pergunta, contexto)
+    salvarHistorico(pergunta, texto)  // não aguarda
+    return texto
 
   } catch {
     // API indisponível: resposta local transparente (spec: não informar o erro ao usuário)
-    return respostaLocal(pergunta, contexto)
+    const resp = respostaLocal(pergunta, contexto)
+    salvarHistorico(pergunta, resp)   // não aguarda
+    return resp
   }
 }
