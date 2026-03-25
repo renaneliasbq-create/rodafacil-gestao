@@ -2,16 +2,17 @@ export const dynamic = 'force-dynamic'
 
 import { createClient } from '@/lib/supabase/server'
 import { STATUS_COLORS, STATUS_LABELS } from '@/lib/utils'
-import { Car, Plus, CheckCircle2 } from 'lucide-react'
+import { Car, Plus, CheckCircle2, Lock, TrendingUp } from 'lucide-react'
 import Link from 'next/link'
+import { getAssinaturaStatus, getLimiteVeiculos } from '@/lib/assinatura'
 
 export default async function VeiculosPage({ searchParams }: { searchParams: { ok?: string } }) {
   const supabase = createClient()
 
-  const { data: veiculos } = await supabase
-    .from('veiculos')
-    .select('*')
-    .order('created_at', { ascending: false })
+  const [{ data: veiculos }, { data: { user } }] = await Promise.all([
+    supabase.from('veiculos').select('*').order('created_at', { ascending: false }),
+    supabase.auth.getUser(),
+  ])
 
   // Motorista atual por veículo
   const { data: contratos } = await supabase
@@ -25,9 +26,15 @@ export default async function VeiculosPage({ searchParams }: { searchParams: { o
     return m?.nome ?? null
   }
 
+  // Limite do plano
+  const assinatura = user ? await getAssinaturaStatus(user.id) : null
+  const limite = assinatura ? getLimiteVeiculos(assinatura) : null
+
   const total = veiculos?.length ?? 0
   const alugados = veiculos?.filter(v => v.status === 'alugado').length ?? 0
   const disponiveis = veiculos?.filter(v => v.status === 'disponivel').length ?? 0
+  const limiteAtingido = limite !== null && total >= limite
+  const pctUso = limite ? Math.min((total / limite) * 100, 100) : 0
 
   return (
     <div className="p-4 lg:p-8 space-y-4 lg:space-y-6">
@@ -38,11 +45,47 @@ export default async function VeiculosPage({ searchParams }: { searchParams: { o
             {total} na frota · {alugados} alugados · {disponiveis} disponíveis
           </p>
         </div>
-        <Link href="/gestor/veiculos/novo" className="btn-primary">
-          <Plus className="w-4 h-4" />
-          Novo veículo
-        </Link>
+        {limiteAtingido ? (
+          <Link href="/gestor/veiculos/novo" className="inline-flex items-center gap-2 bg-amber-500 hover:bg-amber-600 text-white font-semibold px-4 py-2 rounded-lg text-sm transition-colors">
+            <Lock className="w-4 h-4" />
+            Limite atingido
+          </Link>
+        ) : (
+          <Link href="/gestor/veiculos/novo" className="btn-primary">
+            <Plus className="w-4 h-4" />
+            Novo veículo
+          </Link>
+        )}
       </div>
+
+      {/* Barra de uso do plano */}
+      {limite !== null && (
+        <div className={`rounded-xl border px-4 py-3.5 ${limiteAtingido ? 'bg-amber-50 border-amber-200' : pctUso >= 80 ? 'bg-yellow-50 border-yellow-200' : 'bg-gray-50 border-gray-100'}`}>
+          <div className="flex items-center justify-between mb-2">
+            <span className={`text-xs font-semibold ${limiteAtingido ? 'text-amber-700' : 'text-gray-600'}`}>
+              {limiteAtingido ? '🔒 Limite do plano atingido' : `Veículos do plano`}
+            </span>
+            <span className={`text-xs font-bold ${limiteAtingido ? 'text-amber-700' : 'text-gray-700'}`}>
+              {total} / {limite}
+            </span>
+          </div>
+          <div className="h-1.5 bg-gray-200 rounded-full overflow-hidden">
+            <div
+              className={`h-full rounded-full transition-all ${limiteAtingido ? 'bg-amber-500' : pctUso >= 80 ? 'bg-yellow-400' : 'bg-blue-500'}`}
+              style={{ width: `${pctUso}%` }}
+            />
+          </div>
+          {limiteAtingido && (
+            <div className="flex items-center justify-between mt-2.5">
+              <p className="text-xs text-amber-600">Faça upgrade para adicionar mais veículos.</p>
+              <Link href="/planos" className="inline-flex items-center gap-1 text-xs font-semibold text-amber-700 hover:text-amber-800 transition-colors">
+                <TrendingUp className="w-3.5 h-3.5" />
+                Ver planos
+              </Link>
+            </div>
+          )}
+        </div>
+      )}
 
       {searchParams.ok && (
         <div className="flex items-center gap-2 bg-emerald-50 border border-emerald-200 rounded-xl px-4 py-3 text-sm text-emerald-700">

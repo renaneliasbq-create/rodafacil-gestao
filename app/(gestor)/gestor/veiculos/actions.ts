@@ -4,6 +4,7 @@ import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import { revalidatePath } from 'next/cache'
 import { z } from 'zod'
+import { getAssinaturaStatus, getLimiteVeiculos } from '@/lib/assinatura'
 
 export type FormState = { error?: string } | null
 
@@ -34,6 +35,21 @@ export async function criarVeiculo(_prev: FormState, formData: FormData): Promis
   const vincularMotorista = !!(motorista_id && valor_aluguel && periodicidade && data_inicio)
 
   const supabase = createClient()
+
+  // Verificar limite de veículos do plano
+  const { data: { user } } = await supabase.auth.getUser()
+  if (user) {
+    const assinatura = await getAssinaturaStatus(user.id)
+    const limite = getLimiteVeiculos(assinatura)
+    if (limite !== null) {
+      const { count } = await supabase
+        .from('veiculos')
+        .select('id', { count: 'exact', head: true })
+      if ((count ?? 0) >= limite) {
+        return { error: `Você atingiu o limite de ${limite} veículos do seu plano. Faça upgrade para continuar.` }
+      }
+    }
+  }
 
   const { data: veiculo, error } = await supabase
     .from('veiculos')

@@ -59,6 +59,21 @@ export async function getAssinaturaStatus(userId: string): Promise<AssinaturaInf
   }
 }
 
+/**
+ * Retorna o limite de veículos para um plano.
+ * null = ilimitado (override ou gestor_frota)
+ */
+export function getLimiteVeiculos(info: AssinaturaInfo): number | null {
+  if (info.status === 'override') return null
+  const limites: Record<string, number | null> = {
+    gestor_starter: 5,
+    gestor_pro:     20,
+    gestor_frota:   null,
+  }
+  if (!info.plano) return null
+  return limites[info.plano] ?? null
+}
+
 /** Retorna true se o acesso deve ser liberado */
 export function temAcessoAtivo(info: AssinaturaInfo): boolean {
   if (['ativa', 'trial', 'override'].includes(info.status)) return true
