@@ -22,10 +22,8 @@ export async function parsearCSV(
     const { parsear99 } = await import('./noventa-e-nove')
     registrosRaw = parsear99(conteudo)
   } else if (plataforma === 'ifood') {
-    // Etapa 4
-    throw new Error(
-      'Não conseguimos ler este arquivo. Verifique se é o extrato correto do iFood em formato CSV. (Parser em breve)',
-    )
+    const { parsearIfood } = await import('./ifood')
+    registrosRaw = parsearIfood(conteudo)
   } else {
     throw new Error('Plataforma não reconhecida.')
   }
