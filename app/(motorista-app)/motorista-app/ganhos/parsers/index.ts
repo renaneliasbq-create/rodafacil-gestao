@@ -19,10 +19,8 @@ export async function parsearCSV(
     const { parsearUber } = await import('./uber')
     registrosRaw = parsearUber(conteudo)
   } else if (plataforma === '99') {
-    // Etapa 3
-    throw new Error(
-      'Não conseguimos ler este arquivo. Verifique se é o extrato correto da 99 em formato CSV. (Parser em breve)',
-    )
+    const { parsear99 } = await import('./noventa-e-nove')
+    registrosRaw = parsear99(conteudo)
   } else if (plataforma === 'ifood') {
     // Etapa 4
     throw new Error(
