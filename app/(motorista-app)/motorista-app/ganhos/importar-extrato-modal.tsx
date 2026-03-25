@@ -1,6 +1,7 @@
 'use client'
 
-import { useState, useRef, useCallback } from 'react'
+import { useState, useRef } from 'react'
+import { useRouter } from 'next/navigation'
 import { X, ChevronLeft, Upload, FileText, CheckCircle2, AlertCircle, Loader2 } from 'lucide-react'
 import { fmt } from './ganhos-shared'
 
@@ -135,7 +136,7 @@ function RegistroCard({
 /* ── Componente principal ───────────────────────────────────────── */
 interface Props {
   onClose: () => void
-  onImportado: () => void
+  onImportado: (mesParam: string) => void
 }
 
 export function ImportarExtrato({ onClose, onImportado }: Props) {
@@ -228,6 +229,22 @@ export function ImportarExtrato({ onClose, onImportado }: Props) {
   const novos      = registros.filter(r => !r.duplicado)
   const duplicados = registros.filter(r => r.duplicado)
   const totalLiq   = novos.reduce((s, r) => s + r.valor_liquido, 0)
+
+  // Mês mais recente nos registros novos — para redirecionar após importar
+  const mesRedirect = novos.length > 0
+    ? novos.reduce((max, r) => r.data > max ? r.data : max, '').slice(0, 7) // 'YYYY-MM'
+    : new Date().toISOString().slice(0, 7)
+
+  // Período legível para exibir no sucesso
+  const datas = novos.map(r => r.data).sort()
+  const periodoLabel = datas.length > 0
+    ? (() => {
+        const fmt = (d: string) => new Date(d + 'T12:00:00').toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })
+        const inicio = fmt(datas[0])
+        const fim    = fmt(datas[datas.length - 1])
+        return inicio === fim ? inicio : `${inicio} a ${fim}`
+      })()
+    : null
 
   /* ── Render ─────────────────────────────────────────────────────── */
   return (
@@ -502,6 +519,12 @@ export function ImportarExtrato({ onClose, onImportado }: Props) {
                     {platInfo?.nome}
                   </span>
                 </div>
+                {periodoLabel && (
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs text-gray-500">Período importado</span>
+                    <span className="text-xs font-semibold text-gray-700 text-right max-w-[180px] leading-snug capitalize">{periodoLabel}</span>
+                  </div>
+                )}
                 <div className="flex items-center justify-between">
                   <span className="text-xs text-gray-500">Registros importados</span>
                   <span className="text-sm font-bold text-gray-900">{importadosCount}</span>
@@ -573,7 +596,7 @@ export function ImportarExtrato({ onClose, onImportado }: Props) {
 
           {step === 5 && (
             <button
-              onClick={() => { onImportado(); onClose() }}
+              onClick={() => { onImportado(mesRedirect); onClose() }}
               className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-3.5 rounded-xl text-sm transition-colors min-h-[44px]"
             >
               Ver ganhos importados ✓
@@ -588,9 +611,10 @@ export function ImportarExtrato({ onClose, onImportado }: Props) {
 /* ── Botão de entrada (header) ──────────────────────────────────── */
 export function BtnImportarExtrato() {
   const [open, setOpen] = useState(false)
+  const router = useRouter()
 
-  function handleImportado() {
-    window.location.reload()
+  function handleImportado(mesParam: string) {
+    router.push(`/motorista-app/ganhos?mes=${mesParam}`)
   }
 
   return (
@@ -616,9 +640,10 @@ export function BtnImportarExtrato() {
 /* ── Card de ação rápida (home do motorista) ────────────────────── */
 export function BtnImportarExtratoCard() {
   const [open, setOpen] = useState(false)
+  const router = useRouter()
 
-  function handleImportado() {
-    window.location.reload()
+  function handleImportado(mesParam: string) {
+    router.push(`/motorista-app/ganhos?mes=${mesParam}`)
   }
 
   return (
