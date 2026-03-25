@@ -585,12 +585,11 @@ export function ImportarExtrato({ onClose, onImportado }: Props) {
   )
 }
 
-/* ── Botão de entrada ───────────────────────────────────────────── */
+/* ── Botão de entrada (header) ──────────────────────────────────── */
 export function BtnImportarExtrato() {
   const [open, setOpen] = useState(false)
 
   function handleImportado() {
-    // Recarrega a página para refletir os novos ganhos
     window.location.reload()
   }
 
@@ -603,6 +602,35 @@ export function BtnImportarExtrato() {
       >
         <Upload className="w-4 h-4" />
         <span className="hidden sm:inline">Importar</span>
+      </button>
+      {open && (
+        <ImportarExtrato
+          onClose={() => setOpen(false)}
+          onImportado={handleImportado}
+        />
+      )}
+    </>
+  )
+}
+
+/* ── Card de ação rápida (home do motorista) ────────────────────── */
+export function BtnImportarExtratoCard() {
+  const [open, setOpen] = useState(false)
+
+  function handleImportado() {
+    window.location.reload()
+  }
+
+  return (
+    <>
+      <button
+        onClick={() => setOpen(true)}
+        className="flex flex-col items-center gap-1.5 bg-purple-50 border border-purple-100 rounded-2xl py-4 w-full transition-colors active:bg-purple-100"
+      >
+        <div className="w-9 h-9 bg-purple-600 rounded-xl flex items-center justify-center">
+          <Upload className="w-4 h-4 text-white" />
+        </div>
+        <span className="text-xs font-semibold text-purple-700">Importar</span>
       </button>
       {open && (
         <ImportarExtrato

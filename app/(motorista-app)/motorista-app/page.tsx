@@ -4,6 +4,7 @@ import {
   TrendingUp, ArrowUpCircle, Gauge, Bell, ChevronRight,
   TrendingDown, Car, Plus, AlertTriangle,
 } from 'lucide-react'
+import { BtnImportarExtratoCard } from './ganhos/importar-extrato-modal'
 
 function fmt(v: number) {
   return v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', minimumFractionDigits: 2 })
@@ -226,10 +227,10 @@ export default async function MotoristaAppDashboard() {
       {/* ── Ações rápidas ── */}
       <div className="mx-4 mb-4">
         <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2 px-1">Lançamento rápido</p>
-        <div className="grid grid-cols-3 gap-2">
+        <div className="grid grid-cols-2 gap-2">
           <Link
             href="/motorista-app/ganhos"
-            className="flex flex-col items-center gap-1.5 bg-emerald-50 border border-emerald-100 rounded-2xl py-4 transition-colors hover:bg-emerald-100"
+            className="flex flex-col items-center gap-1.5 bg-emerald-50 border border-emerald-100 rounded-2xl py-4 transition-colors active:bg-emerald-100"
           >
             <div className="w-9 h-9 bg-emerald-600 rounded-xl flex items-center justify-center">
               <Plus className="w-4 h-4 text-white" />
@@ -237,9 +238,11 @@ export default async function MotoristaAppDashboard() {
             <span className="text-xs font-semibold text-emerald-700">Ganho</span>
           </Link>
 
+          <BtnImportarExtratoCard />
+
           <Link
             href="/motorista-app/despesas"
-            className="flex flex-col items-center gap-1.5 bg-red-50 border border-red-100 rounded-2xl py-4 transition-colors hover:bg-red-100"
+            className="flex flex-col items-center gap-1.5 bg-red-50 border border-red-100 rounded-2xl py-4 transition-colors active:bg-red-100"
           >
             <div className="w-9 h-9 bg-red-500 rounded-xl flex items-center justify-center">
               <ArrowUpCircle className="w-4 h-4 text-white" />
@@ -249,7 +252,7 @@ export default async function MotoristaAppDashboard() {
 
           <Link
             href="/motorista-app/km"
-            className="flex flex-col items-center gap-1.5 bg-blue-50 border border-blue-100 rounded-2xl py-4 transition-colors hover:bg-blue-100"
+            className="flex flex-col items-center gap-1.5 bg-blue-50 border border-blue-100 rounded-2xl py-4 transition-colors active:bg-blue-100"
           >
             <div className="w-9 h-9 bg-blue-600 rounded-xl flex items-center justify-center">
               <Gauge className="w-4 h-4 text-white" />
