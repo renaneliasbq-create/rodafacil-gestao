@@ -16,6 +16,7 @@ import {
   normalizar,
   parsearData,
   parsearHoras,
+  parsearKm,
   parsearValor,
 } from './utils'
 import type { RegistroImportado } from '../importar-extrato-modal'
@@ -41,6 +42,11 @@ const COL_LIQUIDO = [
 const COL_HORAS = [
   'online hours', 'horas online', 'hours online', 'online time',
   'horas', 'hours', 'duration', 'duracao', 'tempo online',
+]
+const COL_KM = [
+  'distance', 'distancia', 'trip distance', 'distancia da viagem',
+  'distance (km)', 'distancia (km)', 'km', 'quilometragem',
+  'kilometers', 'quilometros', 'km rodados', 'km percorridos',
 ]
 
 // Tipos que devem ser ignorados (não são corridas reais)
@@ -94,6 +100,7 @@ export function parsearUber(
   const colBruto   = encontrarColuna(headers, COL_BRUTO)
   const colLiquido = encontrarColuna(headers, COL_LIQUIDO)
   const colHoras   = encontrarColuna(headers, COL_HORAS)
+  const colKm      = encontrarColuna(headers, COL_KM)
 
   // Data e líquido são obrigatórios — sem eles não conseguimos importar
   if (!colData || !colLiquido) {
@@ -127,6 +134,7 @@ export function parsearUber(
       : valor_liquido // fallback se coluna de bruto não existir
 
     const horas_trabalhadas = parsearHoras(colHoras ? row[colHoras] : undefined)
+    const km_rodados        = parsearKm(colKm ? row[colKm] : undefined)
     const tipo = detectarTipo(descricao)
 
     registros.push({
@@ -136,6 +144,7 @@ export function parsearUber(
       valor_bruto: valor_bruto > 0 ? valor_bruto : valor_liquido,
       valor_liquido,
       horas_trabalhadas,
+      km_rodados,
       _linhaOriginal: i + 2, // +2 para compensar o cabeçalho e o índice 0
     })
   }

@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/supabase/server'
+import { redirect } from 'next/navigation'
 import { TrendingUp, Calendar } from 'lucide-react'
 import { BtnRegistrarGanho, BtnDeletarGanho, FiltroPlatforma, NavMes } from './ganhos-client'
 import { BtnImportarExtrato } from './importar-extrato-modal'
@@ -21,11 +22,38 @@ export default async function GanhosPage({
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return null
 
-  // ── Período ──────────────────────────────────────────────────────
+  // ── Período — two-phase: se não há ?mes, vai para o mês mais recente com dados ──
   const hoje = new Date()
+  const mesAtual = `${hoje.getFullYear()}-${String(hoje.getMonth() + 1).padStart(2, '0')}`
+
+  if (!searchParams.mes) {
+    const inicioMesAtual = `${mesAtual}-01`
+    const { data: ganhoAtual } = await supabase
+      .from('motorista_ganhos')
+      .select('data')
+      .eq('motorista_id', user.id)
+      .gte('data', inicioMesAtual)
+      .limit(1)
+      .maybeSingle()
+
+    if (!ganhoAtual) {
+      const { data: maisRecente } = await supabase
+        .from('motorista_ganhos')
+        .select('data')
+        .eq('motorista_id', user.id)
+        .order('data', { ascending: false })
+        .limit(1)
+        .maybeSingle()
+
+      if (maisRecente?.data) {
+        const mesRedirect = maisRecente.data.slice(0, 7)
+        redirect(`/motorista-app/ganhos?mes=${mesRedirect}`)
+      }
+    }
+  }
+
   const [anoStr, mesStr] = (
-    searchParams.mes ??
-    `${hoje.getFullYear()}-${String(hoje.getMonth() + 1).padStart(2, '0')}`
+    searchParams.mes ?? mesAtual
   ).split('-')
   const ano = parseInt(anoStr)
   const mes = parseInt(mesStr)
@@ -352,7 +380,7 @@ export default async function GanhosPage({
             <p className="text-xs text-gray-400">Toque em "Registrar" para adicionar.</p>
           </div>
         ) : (
-          <div className="space-y-4">
+          <div className="space-y-4 max-h-[60vh] overflow-y-auto pr-1">
             {datas.map(data => (
               <div key={data}>
                 <p className="text-xs font-semibold text-gray-400 mb-2">

@@ -134,6 +134,7 @@ export function parsearIfood(
       valor_bruto: valor_bruto > 0 ? valor_bruto : valor_liquido,
       valor_liquido,
       horas_trabalhadas: null, // iFood não exporta horas
+      km_rodados: null,        // iFood não exporta km
       _linhaOriginal: i + 2,
     })
   }

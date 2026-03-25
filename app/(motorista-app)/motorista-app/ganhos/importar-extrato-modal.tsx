@@ -5,7 +5,7 @@ import { X, ChevronLeft, Upload, FileText, CheckCircle2, AlertCircle, Loader2 } 
 import { fmt } from './ganhos-shared'
 
 /* ── Tipos ──────────────────────────────────────────────────────── */
-export type PlataformaImport = 'uber' | '99' | 'ifood'
+export type PlataformaImport = 'uber' | '99' | 'ifood' | 'indrive'
 
 export interface RegistroImportado {
   data: string            // YYYY-MM-DD
@@ -14,6 +14,7 @@ export interface RegistroImportado {
   valor_bruto: number
   valor_liquido: number
   horas_trabalhadas: number | null
+  km_rodados: number | null
   duplicado: boolean      // true = já existe no banco
   _linhaOriginal?: number
 }
@@ -66,6 +67,21 @@ const PLATAFORMAS = [
       'Importe o arquivo aqui',
     ],
   },
+  {
+    id: 'indrive' as const,
+    nome: 'InDrive',
+    cor: 'bg-indigo-600 text-white',
+    corBorder: 'border-indigo-600',
+    corSel: 'ring-indigo-600',
+    emoji: '🟣',
+    instrucoes: [
+      'Abra o app InDrive (motorista)',
+      'Vá em Histórico → Minhas corridas',
+      'Toque no ícone de filtro ou relatório',
+      'Selecione o período desejado',
+      'Exporte em CSV e importe aqui',
+    ],
+  },
 ]
 
 /* ── Badge de plataforma ────────────────────────────────────────── */
@@ -73,9 +89,10 @@ const PLAT_BADGE: Record<string, string> = {
   uber:    'bg-black text-white',
   '99':    'bg-yellow-400 text-yellow-900',
   ifood:   'bg-red-500 text-white',
+  indrive: 'bg-indigo-600 text-white',
 }
 const PLAT_LABEL: Record<string, string> = {
-  uber: 'Uber', '99': '99', ifood: 'iFood',
+  uber: 'Uber', '99': '99', ifood: 'iFood', indrive: 'InDrive',
 }
 
 /* ── Card de registro no preview ────────────────────────────────── */

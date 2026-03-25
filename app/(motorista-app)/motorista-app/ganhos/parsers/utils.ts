@@ -111,6 +111,29 @@ export function parsearHoras(str: string | undefined): number | null {
   return n > 24 ? Math.round((n / 60) * 100) / 100 : n
 }
 
+/**
+ * Converte string de quilometragem em número decimal.
+ * Suporta: "12.5", "12,5", "12.5 km", "12 km", "12,500" (milhar).
+ */
+export function parsearKm(str: string | undefined): number | null {
+  if (!str || !str.trim()) return null
+  // Remove unidades de medida e espaços
+  let clean = str.trim().toLowerCase().replace(/\s*km\s*/g, '').trim()
+  // Reutiliza a mesma lógica de separador decimal de parsearValor
+  if (clean.includes(',') && clean.includes('.')) {
+    if (clean.lastIndexOf(',') > clean.lastIndexOf('.')) {
+      clean = clean.replace(/\./g, '').replace(',', '.')
+    } else {
+      clean = clean.replace(/,/g, '')
+    }
+  } else {
+    clean = clean.replace(',', '.')
+  }
+  const n = parseFloat(clean)
+  if (isNaN(n) || n <= 0) return null
+  return Math.round(n * 100) / 100
+}
+
 /** Chave única de duplicata: data|valorLiquido|plataforma */
 export function chaveDuplicata(
   data: string,

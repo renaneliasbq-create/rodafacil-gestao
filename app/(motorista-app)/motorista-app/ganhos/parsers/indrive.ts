@@ -1,11 +1,12 @@
 /**
- * Parser do CSV de extrato da 99Motorista.
+ * Parser do CSV de extrato do InDrive (inDriver).
  *
- * A 99 exporta o extrato em Financeiro → Extrato com colunas
- * que variam conforme versão do app. O parser usa matching flexível.
+ * O InDrive exporta o histórico de corridas com colunas que variam
+ * conforme a versão do app e idioma. O parser usa matching flexível.
  *
  * Formatos conhecidos:
- *  - PT: Data da corrida, Valor total, Repasse, Duração
+ *  - PT: Data, Tipo de corrida, Valor total, Valor recebido, Distância (km), Duração
+ *  - EN: Date, Trip type, Total amount, Your earnings, Distance, Duration
  *  - Variações com prefixos/sufixos ou colunas extras
  */
 import Papa from 'papaparse'
@@ -20,30 +21,30 @@ import {
 import type { RegistroImportado } from '../importar-extrato-modal'
 
 const COL_DATA = [
-  'data da corrida', 'data', 'date', 'data do servico', 'data do serviço',
-  'data viagem', 'data hora', 'datetime', 'periodo', 'trip date',
+  'data', 'date', 'data da corrida', 'data do servico', 'data do serviço',
+  'data viagem', 'data hora', 'datetime', 'periodo', 'trip date', 'data de conclusao',
 ]
 const COL_TIPO = [
-  'tipo', 'tipo de servico', 'tipo de serviço', 'categoria',
-  'descricao', 'description', 'type', 'servico', 'serviço',
+  'tipo', 'tipo de corrida', 'tipo de servico', 'tipo de serviço', 'trip type',
+  'categoria', 'descricao', 'description', 'type', 'servico', 'serviço',
 ]
 const COL_BRUTO = [
-  'valor total', 'valor bruto', 'tarifa', 'gross', 'total',
-  'valor da corrida', 'fare', 'amount', 'gross fare',
+  'valor total', 'total amount', 'valor bruto', 'tarifa', 'gross',
+  'valor da corrida', 'fare', 'amount', 'gross fare', 'preco', 'preço',
 ]
 const COL_LIQUIDO = [
-  'repasse', 'valor liquido', 'seus ganhos', 'ganhos', 'net',
-  'net earnings', 'earnings', 'your earnings', 'liquido',
-  'valor repassado', 'valor pago',
+  'valor recebido', 'your earnings', 'repasse', 'ganhos', 'net',
+  'valor liquido', 'seus ganhos', 'net earnings', 'earnings', 'liquido',
+  'valor pago', 'valor repassado', 'recebido',
 ]
 const COL_DURACAO = [
   'duracao', 'duração', 'duration', 'tempo', 'time',
   'tempo de viagem', 'minutos', 'minutes', 'horas',
 ]
 const COL_KM = [
-  'distancia', 'distância', 'km', 'quilometragem', 'quilometros', 'quilômetros',
-  'distance', 'km da corrida', 'distancia da corrida', 'km percorridos',
-  'km rodados', 'kilometers',
+  'distancia', 'distância', 'distance', 'km', 'quilometragem', 'quilometros',
+  'distancia (km)', 'distance (km)', 'km da corrida', 'km percorridos',
+  'km rodados', 'kilometers', 'quilômetros',
 ]
 
 const TIPOS_IGNORAR = [
@@ -64,7 +65,7 @@ function deveIgnorar(descricao: string): boolean {
   return TIPOS_IGNORAR.some(t => n.includes(normalizar(t)))
 }
 
-export function parsear99(
+export function parsearInDrive(
   conteudo: string,
 ): Omit<RegistroImportado, 'duplicado'>[] {
   const result = Papa.parse<Record<string, string>>(conteudo, {
@@ -75,13 +76,13 @@ export function parsear99(
 
   if (result.errors.length > 0 && result.data.length === 0) {
     throw new Error(
-      'Não conseguimos ler este arquivo. Verifique se é o extrato correto da 99 em formato CSV.',
+      'Não conseguimos ler este arquivo. Verifique se é o extrato correto do InDrive em formato CSV.',
     )
   }
 
   const headers = result.meta.fields ?? []
   if (headers.length === 0) {
-    throw new Error('Arquivo CSV sem cabeçalhos. Verifique se é o extrato da 99.')
+    throw new Error('Arquivo CSV sem cabeçalhos. Verifique se é o extrato do InDrive.')
   }
 
   const colData    = encontrarColuna(headers, COL_DATA)
@@ -93,7 +94,7 @@ export function parsear99(
 
   if (!colData || !colLiquido) {
     throw new Error(
-      'Não conseguimos ler este arquivo. Verifique se é o extrato correto da 99 em formato CSV.',
+      'Não conseguimos ler este arquivo. Verifique se é o extrato correto do InDrive em formato CSV.',
     )
   }
 
@@ -119,25 +120,21 @@ export function parsear99(
       ? parsearValor(row[colBruto])
       : valor_liquido
 
-    // A 99 exporta duração em minutos — converter para horas
+    // Duração: InDrive pode exportar em minutos ou HH:MM
     let horas_trabalhadas: number | null = null
     if (colDuracao && row[colDuracao]) {
       const duracaoStr = row[colDuracao].trim()
-      // Pode vir como "45" (minutos), "0:45" (MM:SS ou HH:MM) ou "45 min"
       const somenteNum = duracaoStr.replace(/[^0-9:,\.]/g, '').trim()
       if (somenteNum.includes(':')) {
-        // Formato HH:MM ou MM:SS
         const partes = somenteNum.split(':').map(Number)
         if (partes[0] !== undefined && partes[1] !== undefined) {
-          // Se primeiro número < 10 provavelmente é HH:MM
           horas_trabalhadas = partes[0] < 10 && partes[1] < 60
             ? partes[0] + partes[1] / 60
-            : partes[0] / 60 + partes[1] / 3600 // MM:SS
+            : partes[0] / 60 + partes[1] / 3600
         }
       } else {
         const minutos = parseFloat(somenteNum.replace(',', '.'))
         if (!isNaN(minutos) && minutos > 0) {
-          // Se > 24, assumimos minutos; senão pode ser horas direto
           horas_trabalhadas = minutos > 24 ? minutos / 60 : minutos
         }
       }
@@ -151,7 +148,7 @@ export function parsear99(
 
     registros.push({
       data,
-      plataforma: '99',
+      plataforma: 'indrive',
       tipo: detectarTipo(descricao),
       valor_bruto: valor_bruto > 0 ? valor_bruto : valor_liquido,
       valor_liquido,
@@ -164,7 +161,7 @@ export function parsear99(
   if (registros.length === 0) {
     throw new Error(
       'Nenhum registro de corrida encontrado no arquivo. ' +
-      'Verifique se selecionou o período correto na 99.',
+      'Verifique se selecionou o período correto no InDrive.',
     )
   }
 

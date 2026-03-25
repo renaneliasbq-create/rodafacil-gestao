@@ -24,6 +24,9 @@ export async function parsearCSV(
   } else if (plataforma === 'ifood') {
     const { parsearIfood } = await import('./ifood')
     registrosRaw = parsearIfood(conteudo)
+  } else if (plataforma === 'indrive') {
+    const { parsearInDrive } = await import('./indrive')
+    registrosRaw = parsearInDrive(conteudo)
   } else {
     throw new Error('Plataforma não reconhecida.')
   }

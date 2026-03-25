@@ -1,7 +1,21 @@
 import { createClient } from '@/lib/supabase/server'
-import { Gauge, TrendingUp, Calendar } from 'lucide-react'
-import { BtnRegistrarKm, BtnDeletarKm } from './km-client'
+import { Gauge, TrendingUp, Calendar, Route } from 'lucide-react'
+import { NavMes } from './km-client'
 
+/* ── Configuração visual por plataforma ───────────────────────── */
+const PLAT: Record<string, { label: string; bg: string; text: string; bar: string }> = {
+  uber:    { label: 'Uber',    bg: 'bg-gray-900',   text: 'text-white',      bar: 'bg-gray-800' },
+  '99':    { label: '99',      bg: 'bg-yellow-400', text: 'text-yellow-900', bar: 'bg-yellow-400' },
+  ifood:   { label: 'iFood',   bg: 'bg-red-500',    text: 'text-white',      bar: 'bg-red-500' },
+  indrive: { label: 'InDrive', bg: 'bg-indigo-500', text: 'text-white',      bar: 'bg-indigo-500' },
+  outro:   { label: 'Outro',   bg: 'bg-gray-400',   text: 'text-white',      bar: 'bg-gray-400' },
+}
+
+function cfg(plat: string) {
+  return PLAT[plat] ?? PLAT.outro
+}
+
+/* ── Page ─────────────────────────────────────────────────────── */
 export default async function KmPage({
   searchParams,
 }: {
@@ -13,43 +27,52 @@ export default async function KmPage({
 
   // Período
   const hoje = new Date()
-  const [anoStr, mesStr] = (searchParams.mes ?? `${hoje.getFullYear()}-${String(hoje.getMonth() + 1).padStart(2, '0')}`).split('-')
+  const raw = searchParams.mes ?? `${hoje.getFullYear()}-${String(hoje.getMonth() + 1).padStart(2, '0')}`
+  const [anoStr, mesStr] = raw.split('-')
   const ano = parseInt(anoStr)
   const mes = parseInt(mesStr)
   const inicioMes = `${ano}-${String(mes).padStart(2, '0')}-01`
   const fimMes    = new Date(ano, mes, 0).toISOString().split('T')[0]
-  const mesLabel  = new Date(ano, mes - 1, 1).toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })
+  const mesLabel  = new Date(ano, mes - 1, 1)
+    .toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })
     .replace(/^\w/, c => c.toUpperCase())
 
-  const { data: registros } = await supabase
-    .from('motorista_quilometragem')
-    .select('id, data, km_inicial, km_final, km_total')
+  // Busca ganhos com km no período
+  const { data: ganhos } = await supabase
+    .from('motorista_ganhos')
+    .select('plataforma, data, km_rodados')
     .eq('motorista_id', user.id)
     .gte('data', inicioMes)
     .lte('data', fimMes)
+    .not('km_rodados', 'is', null)
     .order('data', { ascending: false })
 
-  const lista = registros ?? []
+  const lista = ganhos ?? []
 
-  // Stats do mês
-  const totalKm    = lista.reduce((s, r) => s + (r.km_total ?? 0), 0)
-  const diasRodados = lista.length
-  const mediaDiaria = diasRodados > 0 ? totalKm / diasRodados : 0
-  const maiorDia    = lista.reduce((max, r) => Math.max(max, r.km_total ?? 0), 0)
+  // Agrega por plataforma e por dia
+  const kmPlat: Record<string, number> = {}
+  const kmDia: Record<string, { total: number; plataformas: string[] }> = {}
 
-  // Último KM final registrado (para sugerir como inicial do próximo)
-  const ultimoKmFinal = lista.length > 0
-    ? lista.reduce((max, r) => Math.max(max, r.km_final ?? 0), 0)
-    : undefined
+  for (const g of lista) {
+    const km = Number(g.km_rodados ?? 0)
+    kmPlat[g.plataforma] = (kmPlat[g.plataforma] ?? 0) + km
 
-  // Dias do mês já passados (para calcular % de aproveitamento)
-  const diasPassados = mes === hoje.getMonth() + 1 && ano === hoje.getFullYear()
-    ? hoje.getDate()
-    : new Date(ano, mes, 0).getDate()
-  const aproveitamento = diasPassados > 0 ? (diasRodados / diasPassados) * 100 : 0
+    if (!kmDia[g.data]) kmDia[g.data] = { total: 0, plataformas: [] }
+    kmDia[g.data].total += km
+    if (!kmDia[g.data].plataformas.includes(g.plataforma)) {
+      kmDia[g.data].plataformas.push(g.plataforma)
+    }
+  }
 
-  // Agrupado por data para o gráfico de barras simplificado
-  const maxKmDia = lista.length > 0 ? Math.max(...lista.map(r => r.km_total ?? 0)) : 1
+  const totalKm      = Object.values(kmPlat).reduce((s, v) => s + v, 0)
+  const diasAtivos   = Object.keys(kmDia).length
+  const mediaDiaria  = diasAtivos > 0 ? totalKm / diasAtivos : 0
+  const kmPorCorrida = lista.length > 0 ? totalKm / lista.length : 0
+  const temDados     = totalKm > 0
+
+  const plataformasOrd = Object.entries(kmPlat).sort((a, b) => b[1] - a[1])
+  const diasOrd        = Object.entries(kmDia).sort((a, b) => b[0].localeCompare(a[0]))
+  const maxKmDia       = diasOrd.length > 0 ? Math.max(...diasOrd.map(([, d]) => d.total)) : 1
 
   return (
     <div className="pb-6">
@@ -59,28 +82,26 @@ export default async function KmPage({
           <h1 className="text-2xl font-extrabold text-gray-900">Quilometragem</h1>
           <p className="text-sm text-gray-400 mt-0.5">{mesLabel}</p>
         </div>
-        <BtnRegistrarKm kmFinalAnterior={ultimoKmFinal} />
+        <NavMes ano={ano} mes={mes} />
       </div>
 
-      {/* ── Cards de resumo ── */}
+      {/* ── Card principal + stats ── */}
       <div className="px-4 mb-5">
-        {/* Card principal */}
         <div className="bg-gradient-to-br from-blue-600 to-blue-700 rounded-2xl p-4 shadow-lg shadow-blue-200 mb-3">
           <p className="text-blue-100 text-xs font-medium mb-1">Total rodado no mês</p>
           <p className="text-4xl font-extrabold text-white mb-0.5">
-            {totalKm > 0 ? totalKm.toLocaleString('pt-BR') : '—'}
+            {temDados ? Math.round(totalKm).toLocaleString('pt-BR') : '—'}
           </p>
-          {totalKm > 0 && <p className="text-blue-200 text-sm font-medium">quilômetros</p>}
+          {temDados && <p className="text-blue-200 text-sm font-medium">quilômetros</p>}
         </div>
 
-        {/* 3 indicadores */}
         <div className="grid grid-cols-3 gap-2">
           <div className="bg-white border border-gray-100 rounded-2xl p-3 text-center shadow-sm">
             <div className="w-8 h-8 bg-blue-100 rounded-xl flex items-center justify-center mx-auto mb-1.5">
               <Calendar className="w-4 h-4 text-blue-600" />
             </div>
-            <p className="text-[10px] text-gray-400 font-medium leading-tight">Dias rodados</p>
-            <p className="text-lg font-extrabold text-gray-900">{diasRodados}</p>
+            <p className="text-[10px] text-gray-400 font-medium leading-tight">Dias ativos</p>
+            <p className="text-lg font-extrabold text-gray-900">{diasAtivos > 0 ? diasAtivos : '—'}</p>
           </div>
           <div className="bg-white border border-gray-100 rounded-2xl p-3 text-center shadow-sm">
             <div className="w-8 h-8 bg-emerald-100 rounded-xl flex items-center justify-center mx-auto mb-1.5">
@@ -88,114 +109,117 @@ export default async function KmPage({
             </div>
             <p className="text-[10px] text-gray-400 font-medium leading-tight">Média/dia</p>
             <p className="text-lg font-extrabold text-gray-900">
-              {mediaDiaria > 0 ? `${Math.round(mediaDiaria)}` : '—'}
+              {mediaDiaria > 0 ? Math.round(mediaDiaria) : '—'}
             </p>
           </div>
           <div className="bg-white border border-gray-100 rounded-2xl p-3 text-center shadow-sm">
             <div className="w-8 h-8 bg-orange-100 rounded-xl flex items-center justify-center mx-auto mb-1.5">
-              <Gauge className="w-4 h-4 text-orange-500" />
+              <Route className="w-4 h-4 text-orange-500" />
             </div>
-            <p className="text-[10px] text-gray-400 font-medium leading-tight">Maior dia</p>
+            <p className="text-[10px] text-gray-400 font-medium leading-tight">Km/corrida</p>
             <p className="text-lg font-extrabold text-gray-900">
-              {maiorDia > 0 ? maiorDia.toLocaleString('pt-BR') : '—'}
+              {kmPorCorrida > 0 ? kmPorCorrida.toFixed(1) : '—'}
             </p>
           </div>
         </div>
-
-        {/* Barra de aproveitamento do mês */}
-        {diasRodados > 0 && (
-          <div className="mt-3 bg-white border border-gray-100 rounded-2xl px-4 py-3 shadow-sm">
-            <div className="flex items-center justify-between mb-1.5">
-              <p className="text-xs font-semibold text-gray-500">Dias com registro</p>
-              <p className="text-xs font-bold text-blue-600">{diasRodados} de {diasPassados} dias</p>
-            </div>
-            <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
-              <div
-                className="h-full bg-blue-500 rounded-full transition-all"
-                style={{ width: `${Math.min(aproveitamento, 100)}%` }}
-              />
-            </div>
-          </div>
-        )}
       </div>
 
-      {/* ── Gráfico de barras inline ── */}
-      {lista.length > 1 && (
-        <div className="px-4 mb-4">
-          <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">KM por dia</p>
-          <div className="bg-white border border-gray-100 rounded-2xl px-4 pt-3 pb-2 shadow-sm">
-            <div className="flex items-end gap-1.5 h-16">
-              {[...lista].reverse().slice(-20).map((r) => {
-                const pct = maxKmDia > 0 ? ((r.km_total ?? 0) / maxKmDia) * 100 : 0
+      {temDados ? (
+        <>
+          {/* ── Por plataforma ── */}
+          <div className="px-4 mb-4">
+            <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Por plataforma</p>
+            <div className="bg-white border border-gray-100 rounded-2xl shadow-sm divide-y divide-gray-50">
+              {plataformasOrd.map(([plat, km]) => {
+                const c   = cfg(plat)
+                const pct = totalKm > 0 ? (km / totalKm) * 100 : 0
                 return (
-                  <div key={r.id} className="flex-1 flex flex-col items-center gap-1 min-w-0">
-                    <div className="w-full flex items-end justify-center" style={{ height: 52 }}>
-                      <div
-                        className="w-full bg-blue-400 rounded-t"
-                        style={{ height: `${Math.max(pct, 4)}%` }}
-                      />
+                  <div key={plat} className="px-4 py-3">
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="flex items-center gap-2">
+                        <span className={`inline-flex items-center text-[11px] font-bold px-2 py-0.5 rounded-full ${c.bg} ${c.text}`}>
+                          {c.label}
+                        </span>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-sm font-extrabold text-gray-900">
+                          {Math.round(km).toLocaleString('pt-BR')} km
+                        </p>
+                        <p className="text-[10px] text-gray-400">{pct.toFixed(0)}% do total</p>
+                      </div>
+                    </div>
+                    <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                      <div className={`h-full rounded-full ${c.bar}`} style={{ width: `${pct}%` }} />
                     </div>
                   </div>
                 )
               })}
             </div>
-            <p className="text-[10px] text-gray-400 text-center mt-1">Últimos {Math.min(lista.length, 20)} registros</p>
+          </div>
+
+          {/* ── Por dia ── */}
+          <div className="px-4">
+            <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-3">
+              Por dia
+            </p>
+            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm divide-y divide-gray-50">
+              {diasOrd.map(([data, d]) => {
+                const pct = maxKmDia > 0 ? (d.total / maxKmDia) * 100 : 0
+                return (
+                  <div key={data} className="px-4 py-3">
+                    <div className="flex items-center gap-3">
+                      <div className="w-9 h-9 bg-blue-50 rounded-xl flex items-center justify-center flex-shrink-0">
+                        <Gauge className="w-4 h-4 text-blue-500" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center justify-between gap-2">
+                          <p className="text-sm font-extrabold text-gray-900">
+                            {Math.round(d.total).toLocaleString('pt-BR')} km
+                          </p>
+                          <div className="flex gap-1 flex-shrink-0">
+                            {d.plataformas.map(p => {
+                              const c = cfg(p)
+                              return (
+                                <span
+                                  key={p}
+                                  className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${c.bg} ${c.text}`}
+                                >
+                                  {c.label}
+                                </span>
+                              )
+                            })}
+                          </div>
+                        </div>
+                        <p className="text-xs text-gray-400 mt-0.5">
+                          {new Date(data + 'T12:00:00').toLocaleDateString('pt-BR', {
+                            weekday: 'short', day: '2-digit', month: 'short',
+                          }).replace(/^\w/, c => c.toUpperCase())}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="mt-2 h-1 bg-gray-100 rounded-full overflow-hidden">
+                      <div className="h-full bg-blue-400 rounded-full" style={{ width: `${pct}%` }} />
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+        </>
+      ) : (
+        /* ── Empty state ── */
+        <div className="px-4">
+          <div className="flex flex-col items-center justify-center py-12 text-center">
+            <div className="w-16 h-16 bg-blue-50 rounded-2xl flex items-center justify-center mb-4">
+              <Route className="w-8 h-8 text-blue-300" />
+            </div>
+            <p className="text-sm font-bold text-gray-700 mb-1">Nenhum KM registrado</p>
+            <p className="text-xs text-gray-400 max-w-xs leading-relaxed">
+              Os quilômetros são calculados automaticamente ao importar o extrato CSV da Uber ou da 99. Importe seu extrato na aba Ganhos para ver os dados aqui.
+            </p>
           </div>
         </div>
       )}
-
-      {/* ── Lista ── */}
-      <div className="px-4">
-        <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-3">
-          {lista.length} registro{lista.length !== 1 ? 's' : ''}
-        </p>
-
-        {lista.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-12 text-center">
-            <div className="w-14 h-14 bg-blue-50 rounded-2xl flex items-center justify-center mb-3">
-              <Gauge className="w-7 h-7 text-blue-300" />
-            </div>
-            <p className="text-sm font-semibold text-gray-700 mb-1">Nenhum registro ainda</p>
-            <p className="text-xs text-gray-400 max-w-xs">
-              Registre o hodômetro no início e fim de cada dia para acompanhar seus KM rodados.
-            </p>
-          </div>
-        ) : (
-          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm divide-y divide-gray-50">
-            {lista.map(r => {
-              const pct = maxKmDia > 0 ? ((r.km_total ?? 0) / maxKmDia) * 100 : 0
-              return (
-                <div key={r.id} className="px-4 py-3">
-                  <div className="flex items-center gap-3">
-                    <div className="w-9 h-9 bg-blue-100 rounded-xl flex items-center justify-center flex-shrink-0">
-                      <Gauge className="w-4 h-4 text-blue-600" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center justify-between">
-                        <p className="text-sm font-extrabold text-blue-700">
-                          {(r.km_total ?? 0).toLocaleString('pt-BR')} km
-                        </p>
-                        <BtnDeletarKm id={r.id} />
-                      </div>
-                      <p className="text-xs text-gray-400">
-                        {new Date(r.data + 'T12:00:00').toLocaleDateString('pt-BR', {
-                          weekday: 'short', day: '2-digit', month: 'short',
-                        }).replace(/^\w/, c => c.toUpperCase())}
-                        {' · '}
-                        {(r.km_inicial ?? 0).toLocaleString('pt-BR')} → {(r.km_final ?? 0).toLocaleString('pt-BR')}
-                      </p>
-                    </div>
-                  </div>
-                  {/* Mini barra */}
-                  <div className="mt-2 h-1 bg-gray-100 rounded-full overflow-hidden">
-                    <div className="h-full bg-blue-400 rounded-full" style={{ width: `${pct}%` }} />
-                  </div>
-                </div>
-              )
-            })}
-          </div>
-        )}
-      </div>
     </div>
   )
 }
