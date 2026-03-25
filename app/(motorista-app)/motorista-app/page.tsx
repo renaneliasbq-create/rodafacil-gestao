@@ -23,12 +23,45 @@ export default async function MotoristaAppDashboard() {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return null
 
-  // Período: mês atual
   const hoje = new Date()
-  const inicioMes = new Date(hoje.getFullYear(), hoje.getMonth(), 1).toISOString().split('T')[0]
-  const fimMes    = new Date(hoje.getFullYear(), hoje.getMonth() + 1, 0).toISOString().split('T')[0]
 
-  const mesLabel = hoje.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })
+  // Usa o mês atual se tiver dados; senão usa o mês mais recente com dados
+  const anoAtual = hoje.getFullYear()
+  const mesAtual = hoje.getMonth() + 1
+  const inicioMesAtual = `${anoAtual}-${String(mesAtual).padStart(2, '0')}-01`
+
+  const { data: ultimoGanho } = await supabase
+    .from('motorista_ganhos')
+    .select('data')
+    .eq('motorista_id', user.id)
+    .gte('data', inicioMesAtual)
+    .limit(1)
+    .maybeSingle()
+
+  // Se não há dado no mês atual, busca o mês mais recente com dado
+  let refDate = hoje
+  let isMesAtual = true
+  if (!ultimoGanho) {
+    const { data: maisRecente } = await supabase
+      .from('motorista_ganhos')
+      .select('data')
+      .eq('motorista_id', user.id)
+      .order('data', { ascending: false })
+      .limit(1)
+      .maybeSingle()
+    if (maisRecente?.data) {
+      refDate = new Date(maisRecente.data + 'T12:00:00')
+      isMesAtual = false
+    }
+  }
+
+  const ano     = refDate.getFullYear()
+  const mes     = refDate.getMonth() + 1
+  const inicioMes = new Date(ano, mes - 1, 1).toISOString().split('T')[0]
+  const fimMes    = new Date(ano, mes, 0).toISOString().split('T')[0]
+
+  const mesLabel = new Date(ano, mes - 1, 1)
+    .toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })
     .replace(/^\w/, c => c.toUpperCase())
 
   // Queries paralelas
@@ -119,7 +152,12 @@ export default async function MotoristaAppDashboard() {
         <p className="text-sm text-gray-400">Bem-vindo de volta,</p>
         <div className="flex items-center justify-between">
           <h1 className="text-2xl font-extrabold text-gray-900">{primeiroNome} 👋</h1>
-          <span className="text-xs text-gray-400 font-medium bg-gray-100 rounded-full px-3 py-1">{mesLabel}</span>
+          <div className="flex flex-col items-end gap-1">
+            <span className="text-xs text-gray-400 font-medium bg-gray-100 rounded-full px-3 py-1">{mesLabel}</span>
+            {!isMesAtual && (
+              <span className="text-[10px] text-amber-600 font-medium">último mês com dados</span>
+            )}
+          </div>
         </div>
       </div>
 
