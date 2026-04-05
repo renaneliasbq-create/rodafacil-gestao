@@ -3,7 +3,8 @@ import { NextResponse } from 'next/server'
 
 export async function GET(request: Request) {
   const { searchParams, origin } = new URL(request.url)
-  const code = searchParams.get('code')
+  const code   = searchParams.get('code')
+  const perfil = searchParams.get('perfil') // 'gestor' | 'motorista_app' | null
 
   if (code) {
     const supabase = createClient()
@@ -21,18 +22,36 @@ export async function GET(request: Request) {
           .maybeSingle()
 
         if (!profile) {
-          // Novo usuário via OAuth — cria perfil como motorista_app
+          // Novo usuário via OAuth
           const nome = user.user_metadata?.full_name
             ?? user.user_metadata?.name
             ?? user.email?.split('@')[0]
-            ?? 'Motorista'
+            ?? 'Usuário'
+
+          const tipo = perfil === 'gestor' ? 'gestor' : 'motorista_app'
 
           await supabase.from('users').insert({
             id:    user.id,
             nome,
             email: user.email ?? '',
-            tipo:  'motorista_app',
+            tipo,
           })
+
+          // Cria trial de 30 dias para gestores
+          if (tipo === 'gestor') {
+            const trialEnd = new Date()
+            trialEnd.setDate(trialEnd.getDate() + 30)
+            await supabase.from('assinaturas').insert({
+              user_id:            user.id,
+              plano:              'gestor_starter',
+              perfil:             'gestor',
+              periodo:            'mensal',
+              preco_centavos:     4990,
+              status:             'trial',
+              current_period_end: trialEnd.toISOString().split('T')[0],
+            })
+            return NextResponse.redirect(`${origin}/gestor`)
+          }
 
           return NextResponse.redirect(`${origin}/motorista-app`)
         }

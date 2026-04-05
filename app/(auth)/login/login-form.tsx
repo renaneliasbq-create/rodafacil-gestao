@@ -45,7 +45,7 @@ function SenhaInput({ name, placeholder = '••••••••', label }: {
 }
 
 // ─── Botões OAuth ────────────────────────────────────────────
-function BotoesOAuth() {
+function BotoesOAuth({ perfil }: { perfil: Perfil }) {
   const [loading, setLoading] = useState(false)
 
   async function entrarComGoogle() {
@@ -54,7 +54,7 @@ function BotoesOAuth() {
     await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
-        redirectTo: `${window.location.origin}/auth/callback`,
+        redirectTo: `${window.location.origin}/auth/callback?perfil=${perfil}`,
       },
     })
   }
@@ -264,8 +264,8 @@ export function LoginForm() {
         ))}
       </div>
 
-      {/* OAuth — apenas para motorista */}
-      {!isGestor && tab === 'login' && <BotoesOAuth />}
+      {/* OAuth — login com Google para ambos os perfis */}
+      {tab === 'login' && <BotoesOAuth perfil={perfil} />}
 
       {/* Formulário */}
       {tab === 'login'
