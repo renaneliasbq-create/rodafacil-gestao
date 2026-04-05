@@ -51,16 +51,29 @@ export async function iniciarAssinatura(
 
   const preco = periodo === 'anual' ? plano.preco_anual * 12 : plano.preco_mensal
 
-  // Verifica se já tem assinatura ativa
+  // Verifica se já tem assinatura ativa (trial expirado não bloqueia)
   const { data: assinaturaExistente } = await supabase
     .from('assinaturas')
-    .select('id, status')
+    .select('id, status, current_period_end')
     .eq('user_id', user.id)
     .in('status', ['ativa', 'trial'])
     .maybeSingle()
 
   if (assinaturaExistente) {
-    return { error: 'Você já possui uma assinatura ativa. Acesse "Minha Assinatura" para gerenciá-la.' }
+    const hoje = new Date().toISOString().split('T')[0]
+    const trialExpirado = assinaturaExistente.status === 'trial' &&
+      assinaturaExistente.current_period_end &&
+      assinaturaExistente.current_period_end < hoje
+
+    if (!trialExpirado) {
+      return { error: 'Você já possui uma assinatura ativa. Acesse "Minha Assinatura" para gerenciá-la.' }
+    }
+
+    // Trial expirado: fecha o trial antigo para criar a assinatura paga
+    await supabase
+      .from('assinaturas')
+      .update({ status: 'cancelada', cancelada_em: new Date().toISOString() })
+      .eq('id', assinaturaExistente.id)
   }
 
   // Cria (ou recupera) cliente no Pagar.me

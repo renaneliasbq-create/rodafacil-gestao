@@ -15,6 +15,7 @@ import {
   encontrarColuna,
   normalizar,
   parsearData,
+  parsearHoraInicio,
   parsearHoras,
   parsearKm,
   parsearValor,
@@ -135,6 +136,7 @@ export function parsearUber(
 
     const horas_trabalhadas = parsearHoras(colHoras ? row[colHoras] : undefined)
     const km_rodados        = parsearKm(colKm ? row[colKm] : undefined)
+    const hora_inicio       = parsearHoraInicio(row[colData] ?? '')
     const tipo = detectarTipo(descricao)
 
     registros.push({
@@ -145,7 +147,8 @@ export function parsearUber(
       valor_liquido,
       horas_trabalhadas,
       km_rodados,
-      _linhaOriginal: i + 2, // +2 para compensar o cabeçalho e o índice 0
+      hora_inicio,
+      _linhaOriginal: i + 2,
     })
   }
 

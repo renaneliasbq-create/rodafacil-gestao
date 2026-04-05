@@ -134,6 +134,19 @@ export function parsearKm(str: string | undefined): number | null {
   return Math.round(n * 100) / 100
 }
 
+/**
+ * Extrai a hora de início (0–23) de uma string de datetime.
+ * Funciona com ISO, "YYYY-MM-DD HH:MM", "DD/MM/YYYY HH:MM", etc.
+ * Retorna null se não houver componente de hora na string.
+ */
+export function parsearHoraInicio(str: string): number | null {
+  if (!str || !str.trim()) return null
+  const match = str.match(/\b([01]?\d|2[0-3]):([0-5]\d)/)
+  if (!match) return null
+  const h = parseInt(match[1])
+  return h >= 0 && h <= 23 ? h : null
+}
+
 /** Chave única de duplicata: data|valorLiquido|plataforma */
 export function chaveDuplicata(
   data: string,

@@ -84,6 +84,7 @@ export async function importarRegistros(
       valor_liquido:      r.valor_liquido,
       horas_trabalhadas:  r.horas_trabalhadas ?? null,
       km_rodados:         r.km_rodados ?? null,
+      hora_inicio:        r.hora_inicio ?? null,
       origem,
       importacao_id:      lote.id,
     }))

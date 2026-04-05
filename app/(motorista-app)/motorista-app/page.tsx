@@ -2,9 +2,44 @@ import { createClient } from '@/lib/supabase/server'
 import Link from 'next/link'
 import {
   TrendingUp, ArrowUpCircle, Gauge, Bell, ChevronRight,
-  TrendingDown, Car, Plus, AlertTriangle, Mic,
+  TrendingDown, Car, Plus, AlertTriangle, BarChart2,
 } from 'lucide-react'
 import { BtnImportarExtratoCard } from './ganhos/importar-extrato-modal'
+import { AssistenteCard } from './assistente-card'
+import { JornadaCard } from './jornada-card'
+
+function GaugeScore({ score }: { score: number }) {
+  const cx = 100, cy = 100, r = 72
+  function ap(s1: number, s2: number) {
+    const a1 = (1 - s1 / 100) * Math.PI
+    const a2 = (1 - s2 / 100) * Math.PI
+    const x1 = (cx + r * Math.cos(a1)).toFixed(1)
+    const y1 = (cy - r * Math.sin(a1)).toFixed(1)
+    const x2 = (cx + r * Math.cos(a2)).toFixed(1)
+    const y2 = (cy - r * Math.sin(a2)).toFixed(1)
+    const large = Math.abs(s2 - s1) > 50 ? 1 : 0
+    return `M ${x1} ${y1} A ${r} ${r} 0 ${large} 1 ${x2} ${y2}`
+  }
+  const na = (1 - score / 100) * Math.PI
+  const nx = (cx + 56 * Math.cos(na)).toFixed(1)
+  const ny = (cy - 56 * Math.sin(na)).toFixed(1)
+  const scoreColor = score >= 71 ? 'text-emerald-600' : score >= 41 ? 'text-amber-500' : 'text-red-500'
+  const scoreLabel = score >= 71 ? 'Saudável 🟢' : score >= 41 ? 'Regular 🟡' : 'Atenção 🔴'
+  return (
+    <div className="flex flex-col items-center py-1">
+      <svg viewBox="0 20 200 88" className="w-full max-w-[180px]">
+        <path d={ap(0, 100)} stroke="#e5e7eb" strokeWidth="12" fill="none" strokeLinecap="butt" />
+        <path d={ap(0, 40)}   stroke="#fca5a5" strokeWidth="12" fill="none" />
+        <path d={ap(40, 70)}  stroke="#fcd34d" strokeWidth="12" fill="none" />
+        <path d={ap(70, 100)} stroke="#34d399" strokeWidth="12" fill="none" />
+        <line x1={cx} y1={cy} x2={nx} y2={ny} stroke="#374151" strokeWidth="3" strokeLinecap="round" />
+        <circle cx={cx} cy={cy} r="5" fill="#374151" />
+      </svg>
+      <p className={`text-3xl font-extrabold -mt-1 ${scoreColor}`}>{score}</p>
+      <p className={`text-xs font-semibold mt-0.5 ${scoreColor}`}>{scoreLabel}</p>
+    </div>
+  )
+}
 
 function fmt(v: number) {
   return v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', minimumFractionDigits: 2 })
@@ -64,6 +99,14 @@ export default async function MotoristaAppDashboard() {
     .toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })
     .replace(/^\w/, c => c.toUpperCase())
 
+  // Mês anterior (para o score)
+  const mesAnt    = mes === 1 ? 12 : mes - 1
+  const anoAnt    = mes === 1 ? ano - 1 : ano
+  const inicioAnt = `${anoAnt}-${String(mesAnt).padStart(2, '0')}-01`
+  const fimAnt    = new Date(anoAnt, mesAnt, 0).toISOString().split('T')[0]
+
+  const hojeStr = hoje.toISOString().split('T')[0]
+
   // Queries paralelas
   const [
     { data: profile },
@@ -71,8 +114,9 @@ export default async function MotoristaAppDashboard() {
     { data: despesas },
     { data: kmRows },
     { data: alertas },
-    { data: ganhosRecentes },
-    { data: despesasRecentes },
+    { data: ganhosAnt },
+    { data: despesasAnt },
+    { data: jornadaAtivaRow },
   ] = await Promise.all([
     supabase.from('users').select('nome').eq('id', user.id).single(),
 
@@ -88,11 +132,12 @@ export default async function MotoristaAppDashboard() {
       .gte('data', inicioMes)
       .lte('data', fimMes),
 
-    supabase.from('motorista_quilometragem')
-      .select('km_total')
+    supabase.from('motorista_ganhos')
+      .select('km_rodados')
       .eq('motorista_id', user.id)
       .gte('data', inicioMes)
-      .lte('data', fimMes),
+      .lte('data', fimMes)
+      .not('km_rodados', 'is', null),
 
     supabase.from('motorista_alertas')
       .select('id, tipo, descricao, data_vencimento')
@@ -102,17 +147,91 @@ export default async function MotoristaAppDashboard() {
       .limit(3),
 
     supabase.from('motorista_ganhos')
-      .select('data, plataforma, valor_liquido')
+      .select('valor_liquido')
       .eq('motorista_id', user.id)
-      .order('data', { ascending: false })
-      .limit(4),
+      .gte('data', inicioAnt)
+      .lte('data', fimAnt),
 
     supabase.from('motorista_despesas')
-      .select('data, categoria, descricao, valor')
+      .select('valor')
       .eq('motorista_id', user.id)
-      .order('data', { ascending: false })
-      .limit(3),
+      .gte('data', inicioAnt)
+      .lte('data', fimAnt),
+
+    supabase.from('motorista_jornadas')
+      .select('id, hora_inicio, plataforma, status')
+      .eq('motorista_id', user.id)
+      .in('status', ['rodando', 'pausado'])
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle(),
   ])
+
+  // Ganhos e despesas da jornada: filtra por created_at >= hora_inicio
+  // (só o que foi registrado durante/após o início da jornada atual)
+  const [{ data: ganhosHojeRows }, { data: despesasHojeRows }] = jornadaAtivaRow
+    ? await Promise.all([
+        supabase.from('motorista_ganhos')
+          .select('valor_liquido')
+          .eq('motorista_id', user.id)
+          .gte('created_at', jornadaAtivaRow.hora_inicio),
+        supabase.from('motorista_despesas')
+          .select('valor')
+          .eq('motorista_id', user.id)
+          .gte('created_at', jornadaAtivaRow.hora_inicio),
+      ])
+    : [{ data: [] }, { data: [] }]
+
+  // Pausas (depende do ID da jornada — query sequencial)
+  const { data: pausasRows } = jornadaAtivaRow
+    ? await supabase
+        .from('motorista_jornada_pausas')
+        .select('id, motivo, inicio_pausa, fim_pausa, duracao_minutos')
+        .eq('jornada_id', jornadaAtivaRow.id)
+        .order('inicio_pausa', { ascending: true })
+    : { data: [] }
+
+  const jornadaAtiva = jornadaAtivaRow
+    ? { ...jornadaAtivaRow, status: jornadaAtivaRow.status as 'rodando' | 'pausado' }
+    : null
+  const pausas       = pausasRows ?? []
+  const ganhosHoje   = (ganhosHojeRows   ?? []).reduce((s, r) => s + (r.valor_liquido ?? 0), 0)
+  const despesasHoje = (despesasHojeRows ?? []).reduce((s, r) => s + (r.valor ?? 0), 0)
+
+  // Turno vencedor (últimos 90 dias) — para o card compacto da home
+  const inicio90d = new Date(hoje.getTime() - 90 * 86400000).toISOString().split('T')[0]
+  const { data: ganhos90d } = await supabase
+    .from('motorista_ganhos')
+    .select('turno, valor_liquido, horas_trabalhadas')
+    .eq('motorista_id', user.id)
+    .gte('data', inicio90d)
+    .not('turno', 'eq', 'nao_informado')
+    .not('turno', 'is', null)
+
+  const TURNO_LABEL: Record<string, string> = { manha: 'Manhã', tarde: 'Tarde', noite: 'Noite', madrugada: 'Madrugada' }
+  const TURNO_EMOJI: Record<string, string> = { manha: '🌅', tarde: '☀️', noite: '🌙', madrugada: '🌃' }
+
+  const turnoVencedor = (() => {
+    if (!ganhos90d || ganhos90d.length < 6) return null
+    const agg: Record<string, { liq: number; h: number; cnt: number }> = {}
+    for (const g of ganhos90d) {
+      const t = g.turno as string
+      if (!agg[t]) agg[t] = { liq: 0, h: 0, cnt: 0 }
+      agg[t].liq += g.valor_liquido ?? 0
+      agg[t].h   += g.horas_trabalhadas ?? 0
+      agg[t].cnt += 1
+    }
+    const com3 = Object.entries(agg).filter(([, v]) => v.cnt >= 3)
+    if (com3.length < 2) return null
+    const sorted = com3.sort(([, a], [, b]) => {
+      const rphA = a.h > 0 ? a.liq / a.h : a.liq / a.cnt
+      const rphB = b.h > 0 ? b.liq / b.h : b.liq / b.cnt
+      return rphB - rphA
+    })
+    const [turno, dados] = sorted[0]
+    const rph = dados.h > 0 ? dados.liq / dados.h : dados.liq / dados.cnt
+    return { turno, rph, label: TURNO_LABEL[turno] ?? turno, emoji: TURNO_EMOJI[turno] ?? '⏰' }
+  })()
 
   const primeiroNome = profile?.nome?.split(' ')[0] ?? 'Motorista'
 
@@ -121,10 +240,21 @@ export default async function MotoristaAppDashboard() {
   const totalGanhosLiq    = (ganhos ?? []).reduce((s, g) => s + (g.valor_liquido ?? 0), 0)
   const totalDespesas     = (despesas ?? []).reduce((s, d) => s + (d.valor ?? 0), 0)
   const lucroReal         = totalGanhosLiq - totalDespesas
-  const totalKm           = (kmRows ?? []).reduce((s, r) => s + (r.km_total ?? 0), 0)
+  const totalKm           = (kmRows ?? []).reduce((s, r) => s + (r.km_rodados ?? 0), 0)
   const totalHoras        = (ganhos ?? []).reduce((s, g) => s + (g.horas_trabalhadas ?? 0), 0)
   const ganhoPorHora      = totalHoras > 0 ? totalGanhosLiq / totalHoras : 0
   const margemLucro       = totalGanhosBruto > 0 ? (lucroReal / totalGanhosBruto) * 100 : 0
+
+  // Score de saúde financeira
+  const liqAnt   = (ganhosAnt  ?? []).reduce((s, r) => s + (r.valor_liquido ?? 0), 0)
+  const despAnt  = (despesasAnt ?? []).reduce((s, r) => s + (r.valor ?? 0), 0)
+  const lucroAnt = liqAnt - despAnt
+  const varLucro = lucroAnt !== 0 ? ((lucroReal - lucroAnt) / Math.abs(lucroAnt)) * 100 : null
+  const margemScore = totalGanhosBruto > 0 ? Math.min(100, Math.max(0, margemLucro / 30 * 100)) : 0
+  const varScore    = varLucro != null ? Math.min(100, Math.max(0, 50 + varLucro)) : 50
+  const propDesp    = totalGanhosLiq > 0 ? totalDespesas / totalGanhosLiq : 1
+  const despScore   = Math.min(100, Math.max(0, (1 - propDesp) * 100))
+  const score       = Math.round(margemScore * 0.4 + varScore * 0.3 + despScore * 0.3)
 
   // Por plataforma
   const porPlataforma: Record<string, { bruto: number; liq: number; count: number }> = {}
@@ -160,6 +290,14 @@ export default async function MotoristaAppDashboard() {
           </div>
         </div>
       </div>
+
+      {/* ── Jornada ativa ── */}
+      <JornadaCard
+        jornada={jornadaAtiva}
+        pausas={pausas}
+        ganhosHoje={ganhosHoje}
+        despesasHoje={despesasHoje}
+      />
 
       {/* ── Alerta urgente (se houver) ── */}
       {alertasUrgentes.length > 0 && (
@@ -205,23 +343,22 @@ export default async function MotoristaAppDashboard() {
         </div>
       </div>
 
-      {/* ── Assistente de voz ── */}
-      <Link
-        href="/motorista-app/calcular"
-        className="mx-4 mb-4 flex items-center gap-4 rounded-2xl bg-gradient-to-r from-emerald-600 to-teal-600 px-5 py-4 shadow-lg shadow-emerald-200 active:opacity-90 transition-opacity"
-      >
-        <div className="relative flex-shrink-0">
-          <span className="absolute inset-0 rounded-full bg-white/20 animate-ping" />
-          <div className="relative w-11 h-11 rounded-full bg-white/20 flex items-center justify-center">
-            <Mic className="w-5 h-5 text-white" />
+      {/* ── Assistente ── */}
+      {/* Card compacto: turno mais rentável */}
+      {turnoVencedor && (
+        <Link href="/motorista-app/relatorios" className="mx-4 mb-4 flex items-center gap-3 bg-white border border-gray-100 rounded-2xl px-4 py-3 shadow-sm active:bg-gray-50 transition-colors">
+          <span className="text-2xl">{turnoVencedor.emoji}</span>
+          <div className="flex-1 min-w-0">
+            <p className="text-xs text-gray-400 font-medium">Turno mais rentável</p>
+            <p className="text-sm font-bold text-gray-900 leading-tight">
+              {turnoVencedor.label} · R$ {turnoVencedor.rph.toFixed(0)}/h em média
+            </p>
           </div>
-        </div>
-        <div className="flex-1 min-w-0">
-          <p className="text-white font-bold text-sm leading-tight">Vale a pena rodar hoje?</p>
-          <p className="text-emerald-100 text-xs mt-0.5">Pergunte ao assistente por voz</p>
-        </div>
-        <ChevronRight className="w-5 h-5 text-white/70 flex-shrink-0" />
-      </Link>
+          <ChevronRight className="w-4 h-4 text-gray-300 flex-shrink-0" />
+        </Link>
+      )}
+
+      <AssistenteCard />
 
       {/* ── Indicadores rápidos ── */}
       <div className="grid grid-cols-3 gap-3 mx-4 mb-4">
@@ -280,6 +417,24 @@ export default async function MotoristaAppDashboard() {
         </div>
       )}
 
+      {/* ── Saúde Financeira ── */}
+      {temDados && (
+        <div className="mx-4 mb-4">
+          <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2 px-1">Saúde financeira</p>
+          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm px-4 py-4">
+            <GaugeScore score={score} />
+            <Link
+              href="/motorista-app/relatorios"
+              className="mt-3 flex items-center justify-center gap-2 w-full bg-emerald-50 border border-emerald-100 text-emerald-700 font-semibold text-sm rounded-xl py-2.5 active:bg-emerald-100 transition-colors"
+            >
+              <BarChart2 className="w-4 h-4" />
+              Ver relatórios completos
+              <ChevronRight className="w-4 h-4" />
+            </Link>
+          </div>
+        </div>
+      )}
+
       {/* ── Ações rápidas ── */}
       <div className="mx-4 mb-4">
         <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2 px-1">Lançamento rápido</p>
@@ -317,45 +472,6 @@ export default async function MotoristaAppDashboard() {
           </Link>
         </div>
       </div>
-
-      {/* ── Atividade recente ── */}
-      {((ganhosRecentes?.length ?? 0) > 0 || (despesasRecentes?.length ?? 0) > 0) && (
-        <div className="mx-4 mb-4">
-          <div className="flex items-center justify-between mb-2 px-1">
-            <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">Atividade recente</p>
-          </div>
-          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm divide-y divide-gray-50">
-            {(ganhosRecentes ?? []).map((g, i) => (
-              <div key={`g-${i}`} className="flex items-center gap-3 px-4 py-3">
-                <div className="w-8 h-8 bg-emerald-100 rounded-xl flex items-center justify-center flex-shrink-0">
-                  <TrendingUp className="w-4 h-4 text-emerald-600" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-semibold text-gray-900">{g.plataforma}</p>
-                  <p className="text-xs text-gray-400">
-                    {new Date(g.data + 'T12:00:00').toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })}
-                  </p>
-                </div>
-                <p className="text-sm font-bold text-emerald-600">+{fmt(g.valor_liquido)}</p>
-              </div>
-            ))}
-            {(despesasRecentes ?? []).map((d, i) => (
-              <div key={`d-${i}`} className="flex items-center gap-3 px-4 py-3">
-                <div className="w-8 h-8 bg-red-100 rounded-xl flex items-center justify-center flex-shrink-0">
-                  <ArrowUpCircle className="w-4 h-4 text-red-500" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-semibold text-gray-900">{d.descricao ?? d.categoria}</p>
-                  <p className="text-xs text-gray-400">
-                    {new Date(d.data + 'T12:00:00').toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })}
-                  </p>
-                </div>
-                <p className="text-sm font-bold text-red-500">-{fmt(d.valor)}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
 
       {/* ── Empty state ── */}
       {!temDados && (

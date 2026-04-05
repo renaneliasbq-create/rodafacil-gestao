@@ -1,12 +1,14 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import { TrendingUp, Calendar } from 'lucide-react'
-import { BtnRegistrarGanho, BtnDeletarGanho, FiltroPlatforma, NavMes } from './ganhos-client'
+import { BtnRegistrarGanho, BtnDeletarGanho, FiltroPlatforma } from './ganhos-client'
 import { BtnImportarExtrato } from './importar-extrato-modal'
 import { BtnHistoricoImportacoes } from './historico-importacoes'
 import { BADGE, fmt, labelPlataforma } from './ganhos-shared'
 import { GanhosWeeklyChart } from './ganhos-weekly-chart'
 import { GanhosMetaCard } from './ganhos-meta-card'
+import { parsePeriodo, labelPeriodo, isSingleMonth } from '../periodo-utils'
+import { FiltroPeriodo } from '../filtro-periodo'
 
 const FULL_DAY_NAMES = [
   'domingo', 'segunda-feira', 'terça-feira',
@@ -16,18 +18,18 @@ const FULL_DAY_NAMES = [
 export default async function GanhosPage({
   searchParams,
 }: {
-  searchParams: { p?: string; mes?: string }
+  searchParams: { p?: string; mes?: string; de?: string; ate?: string; registrar?: string; plataforma?: string }
 }) {
   const supabase = createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return null
 
-  // ── Período — two-phase: se não há ?mes, vai para o mês mais recente com dados ──
+  // ── Período — two-phase: se não há período definido, vai para o mês mais recente com dados ──
   const hoje = new Date()
-  const mesAtual = `${hoje.getFullYear()}-${String(hoje.getMonth() + 1).padStart(2, '0')}`
+  const mesAtualStr = `${hoje.getFullYear()}-${String(hoje.getMonth() + 1).padStart(2, '0')}`
 
-  if (!searchParams.mes) {
-    const inicioMesAtual = `${mesAtual}-01`
+  if (!searchParams.mes && !searchParams.de && !searchParams.ate) {
+    const inicioMesAtual = `${mesAtualStr}-01`
     const { data: ganhoAtual } = await supabase
       .from('motorista_ganhos')
       .select('data')
@@ -52,27 +54,27 @@ export default async function GanhosPage({
     }
   }
 
-  const [anoStr, mesStr] = (
-    searchParams.mes ?? mesAtual
-  ).split('-')
+  const { de: inicioMes, ate: fimMes } = parsePeriodo({
+    de: searchParams.de,
+    ate: searchParams.ate,
+    mes: searchParams.mes,
+  })
+  const periodoLabel = labelPeriodo(inicioMes, fimMes)
+  const isSingle     = isSingleMonth(inicioMes, fimMes)
+
+  // Derivados do início do período (para cálculos mensais quando isSingle)
+  const [anoStr, mesStr] = inicioMes.split('-')
   const ano = parseInt(anoStr)
   const mes = parseInt(mesStr)
-  const inicioMes = `${ano}-${String(mes).padStart(2, '0')}-01`
-  const fimMes    = new Date(ano, mes, 0).toISOString().split('T')[0]
   const daysInMonth = new Date(ano, mes, 0).getDate()
-  const mesLabel  = new Date(ano, mes - 1, 1)
-    .toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })
-    .replace(/^\w/, c => c.toUpperCase())
-  const mesNome   = new Date(ano, mes - 1, 1)
-    .toLocaleDateString('pt-BR', { month: 'long' })
+  const mesNome     = new Date(ano, mes - 1, 1).toLocaleDateString('pt-BR', { month: 'long' })
 
-  // Mês anterior
-  const prevMes   = mes === 1 ? 12 : mes - 1
-  const prevAno   = mes === 1 ? ano - 1 : ano
-  const prevInicio = `${prevAno}-${String(prevMes).padStart(2, '0')}-01`
-  const prevFim    = new Date(prevAno, prevMes, 0).toISOString().split('T')[0]
-  const prevMesLabel = new Date(prevAno, prevMes - 1, 1)
-    .toLocaleDateString('pt-BR', { month: 'long' })
+  // Mês anterior (só usado quando isSingle)
+  const prevMes      = mes === 1 ? 12 : mes - 1
+  const prevAno      = mes === 1 ? ano - 1 : ano
+  const prevInicio   = `${prevAno}-${String(prevMes).padStart(2, '0')}-01`
+  const prevFim      = new Date(prevAno, prevMes, 0).toISOString().split('T')[0]
+  const prevMesLabel = new Date(prevAno, prevMes - 1, 1).toLocaleDateString('pt-BR', { month: 'long' })
 
   const filtroPlat = searchParams.p ?? null
 
@@ -206,14 +208,20 @@ export default async function GanhosPage({
       <div className="px-4 pt-6 pb-4 flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-extrabold text-gray-900">Ganhos</h1>
-          <NavMes mes={mes} ano={ano} label={mesLabel} />
+          <p className="text-sm text-gray-400 mt-0.5">{periodoLabel}</p>
         </div>
         <div className="flex items-center gap-2">
           <BtnHistoricoImportacoes />
           <BtnImportarExtrato />
-          <BtnRegistrarGanho />
+          <BtnRegistrarGanho
+            autoOpen={searchParams.registrar === '1'}
+            defaultPlataforma={searchParams.plataforma}
+          />
         </div>
       </div>
+
+      {/* ── Filtro de período ── */}
+      <FiltroPeriodo de={inicioMes} ate={fimMes} />
 
       {/* ── Card verde de resumo ── */}
       <div className="px-4 mb-4">
@@ -223,13 +231,13 @@ export default async function GanhosPage({
             {totalLiq > 0 ? fmt(totalLiq) : 'R$ —'}
           </p>
 
-          {/* Comparativo mês anterior */}
-          {hasPrev && totalLiq > 0 && (
+          {/* Comparativo mês anterior (apenas em período mensal) */}
+          {isSingle && hasPrev && totalLiq > 0 && (
             <p className={`text-xs font-medium mb-3 ${diff >= 0 ? 'text-emerald-200' : 'text-red-300'}`}>
               {diff >= 0 ? '↑' : '↓'} {fmt(Math.abs(diff))} {diff >= 0 ? 'acima' : 'abaixo'} de {prevMesLabel}
             </p>
           )}
-          {(!hasPrev || totalLiq === 0) && <div className="mb-3" />}
+          {(!isSingle || !hasPrev || totalLiq === 0) && <div className="mb-3" />}
 
           {/* 4 mini-cards em 2×2 */}
           <div className="grid grid-cols-2 gap-2">
@@ -255,7 +263,7 @@ export default async function GanhosPage({
             <div className="bg-white/15 rounded-xl px-2 py-2 text-center">
               <p className="text-emerald-100 text-[10px] font-medium">Dias trabalhados</p>
               <p className="text-white font-bold text-sm">{workingDays > 0 ? `${workingDays}d` : '—'}</p>
-              {workingDays > 0 && (
+              {isSingle && workingDays > 0 && (
                 <p className="text-emerald-100/60 text-[9px] leading-tight mt-0.5">
                   de {businessDays} úteis em {mesNome}
                 </p>
@@ -265,27 +273,31 @@ export default async function GanhosPage({
         </div>
       </div>
 
-      {/* ── Gráfico semanal ── */}
-      <div className="px-4 mb-4">
-        <div className="bg-white border border-gray-100 rounded-2xl px-3 py-3 shadow-sm">
-          <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">
-            Evolução semanal
-          </p>
-          <GanhosWeeklyChart data={semanas} />
+      {/* ── Gráfico semanal (apenas mês único) ── */}
+      {isSingle && (
+        <div className="px-4 mb-4">
+          <div className="bg-white border border-gray-100 rounded-2xl px-3 py-3 shadow-sm">
+            <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">
+              Evolução semanal
+            </p>
+            <GanhosWeeklyChart data={semanas} />
+          </div>
         </div>
-      </div>
+      )}
 
-      {/* ── Meta mensal ── */}
-      <div className="px-4 mb-4">
-        {metaValor === null ? (
-          <GanhosMetaCard meta={null} totalLiq={totalLiq} mes={mes} ano={ano} />
-        ) : (
-          <GanhosMetaCard meta={metaValor} totalLiq={totalLiq} mes={mes} ano={ano} />
-        )}
-      </div>
+      {/* ── Meta mensal (apenas mês único) ── */}
+      {isSingle && (
+        <div className="px-4 mb-4">
+          {metaValor === null ? (
+            <GanhosMetaCard meta={null} totalLiq={totalLiq} mes={mes} ano={ano} />
+          ) : (
+            <GanhosMetaCard meta={metaValor} totalLiq={totalLiq} mes={mes} ano={ano} />
+          )}
+        </div>
+      )}
 
-      {/* ── Melhor dia da semana ── */}
-      {bestDay && (
+      {/* ── Melhor dia da semana (apenas mês único) ── */}
+      {isSingle && bestDay && (
         <div className="px-4 mb-4">
           <div className="bg-white border border-gray-100 rounded-2xl px-4 py-3 shadow-sm flex items-center gap-3">
             <div className="w-9 h-9 bg-emerald-50 rounded-xl flex items-center justify-center flex-shrink-0">
@@ -296,7 +308,7 @@ export default async function GanhosPage({
                 Melhor dia: {bestDay.nome}
               </p>
               <p className="text-xs text-gray-400 mt-0.5">
-                {fmt(bestDay.media)} de média neste mês
+                {fmt(bestDay.media)} de média no período
               </p>
             </div>
           </div>
@@ -343,8 +355,8 @@ export default async function GanhosPage({
         </div>
       )}
 
-      {/* ── Projeção do mês ── */}
-      {projection !== null && projection > 0 && (
+      {/* ── Projeção do mês (apenas mês atual único) ── */}
+      {isSingle && projection !== null && projection > 0 && (
         <div className="px-4 mb-4">
           <div className="bg-emerald-50 border border-emerald-100 rounded-2xl px-4 py-3.5">
             <p className="text-sm font-bold text-emerald-800 leading-tight">

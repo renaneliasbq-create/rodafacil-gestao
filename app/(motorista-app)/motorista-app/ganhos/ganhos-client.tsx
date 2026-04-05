@@ -8,6 +8,22 @@ import { BADGE, fmt, labelPlataforma } from './ganhos-shared'
 
 export { BADGE, fmt, labelPlataforma }
 
+// ── Turnos ───────────────────────────────────────────────────────
+const TURNOS = [
+  { valor: 'madrugada', label: 'Madrugada', emoji: '🌃' },
+  { valor: 'manha',     label: 'Manhã',     emoji: '🌅' },
+  { valor: 'tarde',     label: 'Tarde',     emoji: '☀️'  },
+  { valor: 'noite',     label: 'Noite',     emoji: '🌙' },
+]
+
+function turnoAtual(): string {
+  const h = new Date().getHours()
+  if (h < 6)  return 'madrugada'
+  if (h < 12) return 'manha'
+  if (h < 18) return 'tarde'
+  return 'noite'
+}
+
 // ── Plataformas: valor (BD) → label (exibição) ──────────────────
 const PLATAFORMAS = [
   { valor: 'uber',    label: 'Uber' },
@@ -36,11 +52,13 @@ function BtnSubmit() {
 }
 
 // ── Modal de registro ────────────────────────────────────────────
-function ModalGanho({ onClose }: { onClose: () => void }) {
+function ModalGanho({ onClose, defaultPlataforma }: { onClose: () => void; defaultPlataforma?: string }) {
+  const initPlat = defaultPlataforma && TAXAS[defaultPlataforma] !== undefined ? defaultPlataforma : 'uber'
   const [state, formAction] = useFormState<GanhoState, FormData>(registrarGanho, null)
-  const [plataforma, setPlataforma] = useState('uber')
+  const [plataforma, setPlataforma] = useState(initPlat)
+  const [turno, setTurno]           = useState(turnoAtual)
   const [bruto, setBruto]           = useState('')
-  const [taxa, setTaxa]             = useState(25)
+  const [taxa, setTaxa]             = useState(TAXAS[initPlat] ?? 25)
   const [liquido, setLiquido]       = useState('')
   const formRef = useRef<HTMLFormElement>(null)
 
@@ -106,6 +124,29 @@ function ModalGanho({ onClose }: { onClose: () => void }) {
               ))}
             </div>
             <input type="hidden" name="plataforma" value={plataforma} />
+          </div>
+
+          {/* Turno */}
+          <div>
+            <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Turno</label>
+            <div className="grid grid-cols-2 gap-2">
+              {TURNOS.map(t => (
+                <button
+                  key={t.valor}
+                  type="button"
+                  onClick={() => setTurno(t.valor)}
+                  className={`flex items-center gap-2 px-3 py-2.5 rounded-xl text-sm font-semibold border-2 transition-all min-h-[44px] ${
+                    turno === t.valor
+                      ? 'border-emerald-500 bg-emerald-50 text-emerald-700'
+                      : 'border-gray-200 text-gray-500 hover:border-gray-300'
+                  }`}
+                >
+                  <span>{t.emoji}</span>
+                  <span>{t.label}</span>
+                </button>
+              ))}
+            </div>
+            <input type="hidden" name="turno" value={turno} />
           </div>
 
           {/* Data */}
@@ -289,8 +330,14 @@ export function FiltroPlatforma({
 }
 
 // ── Botão principal "+ Registrar" ─────────────────────────────────
-export function BtnRegistrarGanho() {
-  const [open, setOpen] = useState(false)
+export function BtnRegistrarGanho({
+  autoOpen,
+  defaultPlataforma,
+}: {
+  autoOpen?: boolean
+  defaultPlataforma?: string
+} = {}) {
+  const [open, setOpen] = useState(!!autoOpen)
 
   return (
     <>
@@ -303,7 +350,7 @@ export function BtnRegistrarGanho() {
         <span className="hidden sm:inline">Registrar</span>
       </button>
 
-      {open && <ModalGanho onClose={() => setOpen(false)} />}
+      {open && <ModalGanho onClose={() => setOpen(false)} defaultPlataforma={defaultPlataforma} />}
     </>
   )
 }

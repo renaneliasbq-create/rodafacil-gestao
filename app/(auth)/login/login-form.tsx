@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { useFormState, useFormStatus } from 'react-dom'
-import { signIn, signUpMotoApp, type LoginState, type SignUpState } from './actions'
+import { signIn, signUpMotoApp, signUpGestor, type LoginState, type SignUpState } from './actions'
 import { Eye, EyeOff, Loader2, LogIn, ArrowLeft, Car, Smartphone, UserPlus } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 
@@ -126,6 +126,34 @@ function FormCadastro() {
   )
 }
 
+// ─── Formulário de cadastro (gestor) ────────────────────────
+function FormCadastroGestor() {
+  const [state, formAction] = useFormState<SignUpState, FormData>(signUpGestor, null)
+  return (
+    <form action={formAction} className="space-y-4">
+      {state?.error && <Erro msg={state.error} />}
+      <div className="bg-blue-50 border border-blue-100 rounded-xl px-4 py-3 flex items-center gap-2">
+        <span className="text-blue-600 text-lg">🎁</span>
+        <p className="text-sm text-blue-700 font-medium">30 dias grátis, sem cartão de crédito</p>
+      </div>
+      <div>
+        <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">Nome completo</label>
+        <input name="nome" type="text" required autoComplete="name" placeholder="Seu nome" className="input" />
+      </div>
+      <div>
+        <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">E-mail</label>
+        <input name="email" type="email" required autoComplete="email" placeholder="seu@email.com" className="input" />
+      </div>
+      <SenhaInput name="password" label="Senha" placeholder="Mínimo 6 caracteres" />
+      <SenhaInput name="confirm" label="Confirmar senha" />
+      <button type="submit" className="btn-primary w-full py-3 mt-2">
+        <UserPlus className="w-4 h-4" />
+        Começar grátis por 30 dias
+      </button>
+    </form>
+  )
+}
+
 // ─── Componente de erro ─────────────────────────────────────
 function Erro({ msg }: { msg: string }) {
   return (
@@ -210,34 +238,42 @@ export function LoginForm() {
           </h2>
         </div>
         <p className="text-gray-400 text-sm">
-          {isGestor ? 'Acesse o painel de gerenciamento da sua frota' : 'Acesse ou crie sua conta gratuita'}
+          {isGestor
+            ? tab === 'cadastro'
+              ? 'Crie sua conta e gerencie sua frota'
+              : 'Acesse o painel de gerenciamento da sua frota'
+            : 'Acesse ou crie sua conta gratuita'
+          }
         </p>
       </div>
 
-      {/* Tabs login / cadastro — apenas para motorista */}
-      {!isGestor && (
-        <div className="flex rounded-xl overflow-hidden border border-gray-200">
-          {(['login', 'cadastro'] as Tab[]).map(t => (
-            <button
-              key={t}
-              onClick={() => setTab(t)}
-              className={`flex-1 py-2.5 text-sm font-semibold transition-colors ${
-                tab === t
-                  ? 'bg-emerald-600 text-white'
-                  : 'bg-white text-gray-500 hover:bg-gray-50'
-              }`}
-            >
-              {t === 'login' ? 'Entrar' : 'Criar conta'}
-            </button>
-          ))}
-        </div>
-      )}
+      {/* Tabs login / cadastro */}
+      <div className="flex rounded-xl overflow-hidden border border-gray-200">
+        {(['login', 'cadastro'] as Tab[]).map(t => (
+          <button
+            key={t}
+            onClick={() => setTab(t)}
+            className={`flex-1 py-2.5 text-sm font-semibold transition-colors ${
+              tab === t
+                ? isGestor ? 'bg-blue-700 text-white' : 'bg-emerald-600 text-white'
+                : 'bg-white text-gray-500 hover:bg-gray-50'
+            }`}
+          >
+            {t === 'login' ? 'Entrar' : 'Criar conta'}
+          </button>
+        ))}
+      </div>
 
       {/* OAuth — apenas para motorista */}
-      {!isGestor && <BotoesOAuth />}
+      {!isGestor && tab === 'login' && <BotoesOAuth />}
 
       {/* Formulário */}
-      {tab === 'login' || isGestor ? <FormLogin /> : <FormCadastro />}
+      {tab === 'login'
+        ? <FormLogin />
+        : isGestor
+          ? <FormCadastroGestor />
+          : <FormCadastro />
+      }
     </div>
   )
 }

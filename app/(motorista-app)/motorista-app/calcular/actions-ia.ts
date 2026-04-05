@@ -140,6 +140,97 @@ async function salvarHistorico(pergunta: string, resposta: string) {
   }
 }
 
+/* ── Classificação de intenção (pergunta vs. registro) ───────────── */
+export type IntencoRegistro = {
+  intencao: 'registro'
+  tipo: 'despesa' | 'ganho'
+  categoria: string
+  valor: number | null
+  plataforma: string | null
+  horas: number | null
+  descricao: string | null
+  confianca: 'alta' | 'media' | 'baixa'
+  resposta_voz: string
+}
+export type IntencaoPergunta = {
+  intencao: 'pergunta'
+  resposta: string
+}
+export type IntencaoVoz = IntencoRegistro | IntencaoPergunta
+
+export async function classificarIntencao(
+  frase: string,
+  contexto: ContextoMotorista,
+): Promise<IntencaoVoz> {
+  if (!process.env.ANTHROPIC_API_KEY) {
+    return { intencao: 'pergunta', resposta: respostaLocal(frase, contexto) }
+  }
+
+  try {
+    const message = await client.messages.create({
+      model: 'claude-haiku-4-5',
+      max_tokens: 256,
+      system: `Você é um assistente financeiro para motoristas de aplicativo brasileiros.
+Analise a frase e identifique se o motorista quer REGISTRAR um lançamento ou PERGUNTAR algo.
+
+Responda APENAS em JSON válido:
+{
+  "intencao": "registro" ou "pergunta",
+  "tipo": "despesa" ou "ganho" ou null,
+  "categoria": string ou null,
+  "valor": number ou null,
+  "plataforma": string ou null,
+  "horas": number ou null,
+  "descricao": string ou null,
+  "confianca": "alta" ou "media" ou "baixa",
+  "resposta_voz": string
+}
+
+Para "resposta_voz":
+- Se registro: frase curta confirmando o que entendeu. Ex: "Anotei 200 reais de combustível hoje. Confirma?"
+- Se pergunta: resposta curta e informal de no máximo 3 frases com base nos dados disponíveis
+
+Categorias de despesa: combustivel, manutencao, seguro, ipva, lavagem, multa, outros
+Categorias de ganho: uber, 99, ifood, indrive, outros
+
+Exemplos de REGISTRO:
+"Coloquei 200 de gasolina" → despesa, combustivel, 200
+"Ganhei 320 na Uber, trabalhei 6 horas" → ganho, uber, 320, horas:6
+"Fiz uma revisão de 480" → despesa, manutencao, 480
+"Paguei 50 de lavagem" → despesa, lavagem, 50
+"Recebi 280 pelo iFood" → ganho, ifood, 280
+"Tomei uma multa de 130" → despesa, multa, 130
+
+Exemplos de PERGUNTA:
+"Vale a pena rodar hoje?" → pergunta
+"Quanto ganhei essa semana?" → pergunta
+"Qual plataforma compensa mais?" → pergunta`,
+      messages: [
+        { role: 'user', content: frase },
+      ],
+    })
+
+    const bloco = message.content.find(b => b.type === 'text')
+    const texto = bloco?.type === 'text' ? bloco.text.trim() : ''
+    const cleaned = texto.replace(/^```json?\s*/i, '').replace(/\s*```$/, '').trim()
+    const parsed = JSON.parse(cleaned)
+
+    if (parsed.intencao === 'registro') {
+      return parsed as IntencoRegistro
+    }
+
+    // Para perguntas, se a resposta_voz estiver vazia, usar o assistente completo
+    const resposta = parsed.resposta_voz?.trim()
+      || await perguntarAssistente(frase, contexto)
+
+    return { intencao: 'pergunta', resposta }
+  } catch {
+    // Em caso de erro, trata como pergunta
+    const resp = respostaLocal(frase, contexto)
+    return { intencao: 'pergunta', resposta: resp }
+  }
+}
+
 /* ── Ação principal ──────────────────────────────────────────────── */
 export async function perguntarAssistente(
   pergunta: string,

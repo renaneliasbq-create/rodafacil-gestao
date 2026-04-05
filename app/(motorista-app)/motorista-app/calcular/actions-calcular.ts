@@ -8,6 +8,14 @@ export interface ContextoMotorista {
   ganhoPorHora: Record<string, number>
   // Média de ganho líquido por dia da semana (0=dom … 6=sab)
   mediaPorDiaSemana: Record<number, number>
+  // Ganho médio por HORA por dia da semana (últimos 90 dias)
+  ganhoPorHoraPorDia: Record<number, number>
+  // Quantas sessões (dias distintos) por dia da semana
+  contagemPorDia: Record<number, number>
+  // Melhor plataforma (maior ganho/h) por dia da semana
+  melhorPlataformaPorDia: Record<number, string>
+  // Turnos por dia da semana, ordenados do mais rentável para o menos
+  turnosPorDia: Record<number, TurnoInfo[]>
   // Despesa média por dia trabalhado
   despesaMediaDia: number
   // KM médio rodado por hora
@@ -28,6 +36,27 @@ export interface ContextoMotorista {
 
 const DIAS = ['domingo','segunda-feira','terça-feira','quarta-feira','quinta-feira','sexta-feira','sábado']
 
+export interface TurnoInfo {
+  id: 'manha' | 'tarde' | 'noite' | 'madrugada'
+  label: string
+  emoji: string
+  inicio: number   // hora inclusive
+  fim: number      // hora exclusive
+  ganhoMedioHora: number
+  count: number    // corridas com hora_inicio neste turno
+}
+
+const TURNOS: Omit<TurnoInfo, 'ganhoMedioHora' | 'count'>[] = [
+  { id: 'manha',     label: 'Manhã',     emoji: '🌅', inicio: 6,  fim: 12 },
+  { id: 'tarde',     label: 'Tarde',     emoji: '☀️', inicio: 12, fim: 18 },
+  { id: 'noite',     label: 'Noite',     emoji: '🌆', inicio: 18, fim: 24 },
+  { id: 'madrugada', label: 'Madrugada', emoji: '🌙', inicio: 0,  fim: 6  },
+]
+
+function turnoDeHora(h: number): typeof TURNOS[number] | null {
+  return TURNOS.find(t => h >= t.inicio && h < t.fim) ?? null
+}
+
 export async function buscarContextoMotorista(): Promise<ContextoMotorista> {
   const supabase = createClient()
   const { data: { user } } = await supabase.auth.getUser()
@@ -38,22 +67,28 @@ export async function buscarContextoMotorista(): Promise<ContextoMotorista> {
   const horaAtual  = `${String(agora.getHours()).padStart(2,'0')}:${String(agora.getMinutes()).padStart(2,'0')}`
 
   const vazio: ContextoMotorista = {
-    ganhoPorHora: {}, mediaPorDiaSemana: {}, despesaMediaDia: 0,
-    kmPorHora: null, tipoCombustivel: null, diasHistorico: 0,
-    diaSemana, horaAtual, dataHoje, mediaGanhoHoje: null,
-    precoCombustivelRef: null,
+    ganhoPorHora: {}, mediaPorDiaSemana: {}, ganhoPorHoraPorDia: {},
+    contagemPorDia: {}, melhorPlataformaPorDia: {}, turnosPorDia: {},
+    despesaMediaDia: 0, kmPorHora: null, tipoCombustivel: null,
+    diasHistorico: 0, diaSemana, horaAtual, dataHoje,
+    mediaGanhoHoje: null, precoCombustivelRef: null,
   }
 
   if (!user) return vazio
 
-  // ── Data de corte: 30 dias atrás ────────────────────────────────
-  const corte = new Date(agora)
-  corte.setDate(corte.getDate() - 30)
-  const dataCorte = corte.toISOString().split('T')[0]
+  // ── Datas de corte ───────────────────────────────────────────────
+  const corte30 = new Date(agora)
+  corte30.setDate(corte30.getDate() - 30)
+  const dataCorte = corte30.toISOString().split('T')[0]
+
+  const corte90 = new Date(agora)
+  corte90.setDate(corte90.getDate() - 90)
+  const dataCorte90 = corte90.toISOString().split('T')[0]
 
   // ── Queries paralelas ────────────────────────────────────────────
   const [
     { data: ganhos },
+    { data: ganhos90 },
     { data: despesas },
     { data: kmRows },
     { data: veiculo },
@@ -65,6 +100,13 @@ export async function buscarContextoMotorista(): Promise<ContextoMotorista> {
       .eq('motorista_id', user.id)
       .gte('data', dataCorte)
       .order('data', { ascending: false }),
+
+    // Janela estendida de 90 dias para análise por dia da semana e turnos
+    supabase
+      .from('motorista_ganhos')
+      .select('data, plataforma, valor_liquido, horas_trabalhadas, hora_inicio')
+      .eq('motorista_id', user.id)
+      .gte('data', dataCorte90),
 
     supabase
       .from('motorista_despesas')
@@ -93,9 +135,10 @@ export async function buscarContextoMotorista(): Promise<ContextoMotorista> {
       .limit(3),
   ])
 
-  const g = ganhos    ?? []
-  const d = despesas  ?? []
-  const k = kmRows    ?? []
+  const g   = ganhos    ?? []
+  const g90 = ganhos90  ?? []
+  const d   = despesas  ?? []
+  const k   = kmRows    ?? []
 
   // ── Ganho por hora por plataforma ────────────────────────────────
   const porPlat: Record<string, { liq: number; horas: number }> = {}
@@ -169,13 +212,99 @@ export async function buscarContextoMotorista(): Promise<ContextoMotorista> {
     if (media > 0) precoCombustivelRef = Math.round(media * 100) / 100
   }
 
+  // ── Análise por dia da semana (90 dias) ─────────────────────────
+  // Agrega liq, horas e contagem de datas distintas por dow
+  const dowLiq:    Record<number, number>              = {}
+  const dowHoras:  Record<number, number>              = {}
+  const dowDatas:  Record<number, Set<string>>         = {}
+  const dowPlatL:  Record<number, Record<string, number>> = {}
+  const dowPlatH:  Record<number, Record<string, number>> = {}
+
+  for (const row of g90) {
+    if (!row.data) continue
+    const dow  = new Date(row.data + 'T12:00:00').getDay()
+    const liq  = row.valor_liquido    ?? 0
+    const hrs  = row.horas_trabalhadas ?? 0
+    const plat = row.plataforma ?? 'outro'
+
+    dowLiq[dow]   = (dowLiq[dow]   ?? 0) + liq
+    dowHoras[dow] = (dowHoras[dow] ?? 0) + hrs
+
+    if (!dowDatas[dow]) dowDatas[dow] = new Set()
+    dowDatas[dow].add(row.data)
+
+    if (!dowPlatL[dow]) dowPlatL[dow] = {}
+    if (!dowPlatH[dow]) dowPlatH[dow] = {}
+    dowPlatL[dow][plat] = (dowPlatL[dow][plat] ?? 0) + liq
+    dowPlatH[dow][plat] = (dowPlatH[dow][plat] ?? 0) + hrs
+  }
+
+  const ganhoPorHoraPorDia:    Record<number, number> = {}
+  const contagemPorDia:        Record<number, number> = {}
+  const melhorPlataformaPorDia: Record<number, string> = {}
+
+  for (const dowStr of Object.keys(dowLiq)) {
+    const dow   = Number(dowStr)
+    const count = dowDatas[dow]?.size ?? 0
+    contagemPorDia[dow] = count
+
+    if (dowHoras[dow] > 0) {
+      ganhoPorHoraPorDia[dow] = Math.round(dowLiq[dow] / dowHoras[dow] * 100) / 100
+    }
+
+    // Melhor plataforma: maior ganho/hora; fallback: maior ganho total
+    const platL = dowPlatL[dow] ?? {}
+    let bestPlat = '', bestPH = -1
+    for (const [plat, liq] of Object.entries(platL)) {
+      const hrs = dowPlatH[dow]?.[plat] ?? 0
+      const ph  = hrs > 0 ? liq / hrs : liq
+      if (ph > bestPH) { bestPH = ph; bestPlat = plat }
+    }
+    if (bestPlat) melhorPlataformaPorDia[dow] = bestPlat
+  }
+
+  // ── Turnos por dia da semana ─────────────────────────────────────
+  // Agrupa corridas com hora_inicio por (dow, turno) e calcula ganho médio/hora
+  // dow → turnoId → { somaLiq, somaHoras, count }
+  const turnoAgg: Record<number, Record<string, { liq: number; horas: number; count: number }>> = {}
+
+  for (const row of g90) {
+    if (!row.data || row.hora_inicio == null) continue
+    const dow   = new Date(row.data + 'T12:00:00').getDay()
+    const turno = turnoDeHora(row.hora_inicio)
+    if (!turno) continue
+
+    if (!turnoAgg[dow]) turnoAgg[dow] = {}
+    if (!turnoAgg[dow][turno.id]) turnoAgg[dow][turno.id] = { liq: 0, horas: 0, count: 0 }
+    turnoAgg[dow][turno.id].liq   += row.valor_liquido    ?? 0
+    turnoAgg[dow][turno.id].horas += row.horas_trabalhadas ?? 0
+    turnoAgg[dow][turno.id].count += 1
+  }
+
+  const turnosPorDia: Record<number, TurnoInfo[]> = {}
+  for (const [dowStr, turnos] of Object.entries(turnoAgg)) {
+    const dow = Number(dowStr)
+    const infos: TurnoInfo[] = []
+    for (const [turnoId, agg] of Object.entries(turnos)) {
+      const def = TURNOS.find(t => t.id === turnoId)!
+      const ganhoMedioHora = agg.horas > 0
+        ? Math.round(agg.liq / agg.horas * 100) / 100
+        : Math.round(agg.liq / agg.count * 100) / 100
+      infos.push({ ...def, ganhoMedioHora, count: agg.count })
+    }
+    turnosPorDia[dow] = infos.sort((a, b) => b.ganhoMedioHora - a.ganhoMedioHora)
+  }
+
   // ── Projeção para hoje ───────────────────────────────────────────
-  const dowHoje       = agora.getDay()
+  const dowHoje        = agora.getDay()
   const mediaGanhoHoje = mediaPorDiaSemana[dowHoje] ?? null
 
   return {
     ganhoPorHora,
     mediaPorDiaSemana,
+    ganhoPorHoraPorDia,
+    contagemPorDia,
+    melhorPlataformaPorDia,
     despesaMediaDia,
     kmPorHora,
     tipoCombustivel,

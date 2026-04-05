@@ -1,26 +1,26 @@
 import { createClient } from '@/lib/supabase/server'
 import { ArrowUpCircle } from 'lucide-react'
-import { BtnRegistrarDespesa, BtnDeletarDespesa, FiltroCategoria, NavMes } from './despesas-client'
+import { BtnRegistrarDespesa, BtnDeletarDespesa, FiltroCategoria } from './despesas-client'
 import { getCat, fmt } from './despesas-shared'
+import { parsePeriodo, labelPeriodo } from '../periodo-utils'
+import { FiltroPeriodo } from '../filtro-periodo'
 
 export default async function DespesasPage({
   searchParams,
 }: {
-  searchParams: { cat?: string; mes?: string }
+  searchParams: { cat?: string; mes?: string; de?: string; ate?: string }
 }) {
   const supabase = createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return null
 
   // Período
-  const hoje = new Date()
-  const [anoStr, mesStr] = (searchParams.mes ?? `${hoje.getFullYear()}-${String(hoje.getMonth() + 1).padStart(2, '0')}`).split('-')
-  const ano = parseInt(anoStr)
-  const mes = parseInt(mesStr)
-  const inicioMes = `${ano}-${String(mes).padStart(2, '0')}-01`
-  const fimMes    = new Date(ano, mes, 0).toISOString().split('T')[0]
-  const mesLabel  = new Date(ano, mes - 1, 1).toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })
-    .replace(/^\w/, c => c.toUpperCase())
+  const { de: inicioMes, ate: fimMes } = parsePeriodo({
+    de: searchParams.de,
+    ate: searchParams.ate,
+    mes: searchParams.mes,
+  })
+  const periodoLabel = labelPeriodo(inicioMes, fimMes)
 
   const filtroCat = searchParams.cat ?? null
 
@@ -71,10 +71,13 @@ export default async function DespesasPage({
       <div className="px-4 pt-6 pb-4 flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-extrabold text-gray-900">Despesas</h1>
-          <NavMes mes={mes} ano={ano} label={mesLabel} />
+          <p className="text-sm text-gray-400 mt-0.5">{periodoLabel}</p>
         </div>
         <BtnRegistrarDespesa />
       </div>
+
+      {/* ── Filtro de período ── */}
+      <FiltroPeriodo de={inicioMes} ate={fimMes} cor="vermelho" />
 
       {/* ── Card resumo ── */}
       <div className="px-4 mb-5">

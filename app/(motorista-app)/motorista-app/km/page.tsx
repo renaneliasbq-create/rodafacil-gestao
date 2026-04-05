@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { Gauge, TrendingUp, Calendar, Route } from 'lucide-react'
-import { NavMes } from './km-client'
+import { parsePeriodo, labelPeriodo } from '../periodo-utils'
+import { FiltroPeriodo } from '../filtro-periodo'
 
 /* ── Configuração visual por plataforma ───────────────────────── */
 const PLAT: Record<string, { label: string; bg: string; text: string; bar: string }> = {
@@ -19,23 +20,19 @@ function cfg(plat: string) {
 export default async function KmPage({
   searchParams,
 }: {
-  searchParams: { mes?: string }
+  searchParams: { mes?: string; de?: string; ate?: string }
 }) {
   const supabase = createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return null
 
   // Período
-  const hoje = new Date()
-  const raw = searchParams.mes ?? `${hoje.getFullYear()}-${String(hoje.getMonth() + 1).padStart(2, '0')}`
-  const [anoStr, mesStr] = raw.split('-')
-  const ano = parseInt(anoStr)
-  const mes = parseInt(mesStr)
-  const inicioMes = `${ano}-${String(mes).padStart(2, '0')}-01`
-  const fimMes    = new Date(ano, mes, 0).toISOString().split('T')[0]
-  const mesLabel  = new Date(ano, mes - 1, 1)
-    .toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })
-    .replace(/^\w/, c => c.toUpperCase())
+  const { de: inicioMes, ate: fimMes } = parsePeriodo({
+    de: searchParams.de,
+    ate: searchParams.ate,
+    mes: searchParams.mes,
+  })
+  const periodoLabel = labelPeriodo(inicioMes, fimMes)
 
   // Busca ganhos com km no período
   const { data: ganhos } = await supabase
@@ -77,18 +74,18 @@ export default async function KmPage({
   return (
     <div className="pb-6">
       {/* ── Header ── */}
-      <div className="px-4 pt-6 pb-4 flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-extrabold text-gray-900">Quilometragem</h1>
-          <p className="text-sm text-gray-400 mt-0.5">{mesLabel}</p>
-        </div>
-        <NavMes ano={ano} mes={mes} />
+      <div className="px-4 pt-6 pb-4">
+        <h1 className="text-2xl font-extrabold text-gray-900">Quilometragem</h1>
+        <p className="text-sm text-gray-400 mt-0.5">{periodoLabel}</p>
       </div>
+
+      {/* ── Filtro de período ── */}
+      <FiltroPeriodo de={inicioMes} ate={fimMes} cor="azul" />
 
       {/* ── Card principal + stats ── */}
       <div className="px-4 mb-5">
         <div className="bg-gradient-to-br from-blue-600 to-blue-700 rounded-2xl p-4 shadow-lg shadow-blue-200 mb-3">
-          <p className="text-blue-100 text-xs font-medium mb-1">Total rodado no mês</p>
+          <p className="text-blue-100 text-xs font-medium mb-1">Total rodado no período</p>
           <p className="text-4xl font-extrabold text-white mb-0.5">
             {temDados ? Math.round(totalKm).toLocaleString('pt-BR') : '—'}
           </p>

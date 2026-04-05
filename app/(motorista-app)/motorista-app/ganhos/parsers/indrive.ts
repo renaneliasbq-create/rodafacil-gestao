@@ -14,6 +14,7 @@ import {
   encontrarColuna,
   normalizar,
   parsearData,
+  parsearHoraInicio,
   parsearHoras,
   parsearKm,
   parsearValor,
@@ -66,13 +67,37 @@ function deveIgnorar(descricao: string): boolean {
   return TIPOS_IGNORAR.some(t => n.includes(normalizar(t)))
 }
 
+function detectarDelimitador(primeiraLinha: string): ',' | ';' | '\t' {
+  const tabs  = (primeiraLinha.match(/\t/g)  ?? []).length
+  const semis = (primeiraLinha.match(/;/g)   ?? []).length
+  const commas= (primeiraLinha.match(/,/g)   ?? []).length
+  if (tabs  >= semis && tabs  >= commas && tabs  > 0) return '\t'
+  if (semis >= commas && semis > 0) return ';'
+  return ','
+}
+
+function preprocessarCSV(conteudo: string, delimiter: ',' | ';' | '\t'): string {
+  // Remove BOM (Byte Order Mark) que alguns exportadores adicionam
+  let s = conteudo.replace(/^\uFEFF/, '')
+  // Se delimitador é vírgula, valores monetários BR "R$ 20,00" contêm vírgula
+  // decimal e causam desalinhamento de colunas — convertemos para ponto decimal
+  if (delimiter === ',') {
+    s = s.replace(/R\$\s*(\d+),(\d{2})/g, 'R$ $1.$2')
+  }
+  return s
+}
+
 export function parsearInDrive(
   conteudo: string,
 ): Omit<RegistroImportado, 'duplicado'>[] {
-  const result = Papa.parse<Record<string, string>>(conteudo, {
+  const primeiraLinha = conteudo.split('\n')[0] ?? ''
+  const delimiter = detectarDelimitador(primeiraLinha)
+  const conteudoProcessado = preprocessarCSV(conteudo, delimiter)
+  const result = Papa.parse<Record<string, string>>(conteudoProcessado, {
     header: true,
     skipEmptyLines: true,
-    transformHeader: (h: string) => h.trim(),
+    delimiter,
+    transformHeader: (h: string) => h.trim().replace(/^\uFEFF/, ''),
   })
 
   if (result.errors.length > 0 && result.data.length === 0) {
@@ -145,7 +170,8 @@ export function parsearInDrive(
       }
     }
 
-    const km_rodados = parsearKm(colKm ? row[colKm] : undefined)
+    const km_rodados  = parsearKm(colKm ? row[colKm] : undefined)
+    const hora_inicio = parsearHoraInicio(row[colData] ?? '')
 
     registros.push({
       data,
@@ -155,6 +181,7 @@ export function parsearInDrive(
       valor_liquido,
       horas_trabalhadas,
       km_rodados,
+      hora_inicio,
       _linhaOriginal: i + 2,
     })
   }
@@ -162,7 +189,7 @@ export function parsearInDrive(
   if (registros.length === 0) {
     throw new Error(
       'Nenhum registro de corrida encontrado no arquivo. ' +
-      'Verifique se selecionou o período correto no InDrive.',
+      'Verifique se o arquivo contém corridas com valor recebido maior que zero.',
     )
   }
 

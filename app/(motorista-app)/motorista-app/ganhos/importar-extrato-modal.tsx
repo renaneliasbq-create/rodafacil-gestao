@@ -15,6 +15,7 @@ export interface RegistroImportado {
   valor_liquido: number
   horas_trabalhadas: number | null
   km_rodados: number | null
+  hora_inicio: number | null  // 0–23, hora de início da corrida (se disponível no CSV)
   duplicado: boolean      // true = já existe no banco
   _linhaOriginal?: number
 }
@@ -55,9 +56,10 @@ const PLATAFORMAS = [
   {
     id: 'ifood' as const,
     nome: 'iFood',
-    cor: 'bg-red-500 text-white',
+    cor: 'bg-transparent',
     corBorder: 'border-red-500',
     corSel: 'ring-red-500',
+    logo: '/ifood-logo.png',
     emoji: '🔴',
     instrucoes: [
       'Acesse o Portal do Entregador iFood',
@@ -70,9 +72,10 @@ const PLATAFORMAS = [
   {
     id: 'indrive' as const,
     nome: 'InDrive',
-    cor: 'bg-indigo-600 text-white',
+    cor: 'bg-transparent',
     corBorder: 'border-indigo-600',
     corSel: 'ring-indigo-600',
+    logo: '/indrive-logo.png',
     emoji: '🟣',
     instrucoes: [
       'Abra o app InDrive (motorista)',
@@ -329,9 +332,13 @@ export function ImportarExtrato({ onClose, onImportado }: Props) {
                   onClick={() => selecionarPlataforma(p.id)}
                   className="w-full flex items-center gap-4 p-4 rounded-2xl border-2 border-gray-100 hover:border-gray-300 bg-white hover:bg-gray-50 transition-all text-left min-h-[64px]"
                 >
-                  <span className={`w-10 h-10 rounded-xl flex items-center justify-center text-sm font-extrabold flex-shrink-0 ${p.cor}`}>
-                    {p.nome === '99' ? '99' : p.nome[0]}
-                  </span>
+                  {'logo' in p && p.logo ? (
+                    <img src={p.logo} alt={p.nome} className="w-10 h-10 rounded-xl object-contain flex-shrink-0" />
+                  ) : (
+                    <span className={`w-10 h-10 rounded-xl flex items-center justify-center text-sm font-extrabold flex-shrink-0 ${p.cor}`}>
+                      {p.nome === '99' ? '99' : p.nome[0]}
+                    </span>
+                  )}
                   <div>
                     <p className="font-bold text-gray-900">{p.nome}</p>
                     <p className="text-xs text-gray-400 mt-0.5">Importar histórico de {p.nome === 'iFood' ? 'entregas' : 'corridas'}</p>

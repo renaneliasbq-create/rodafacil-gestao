@@ -13,6 +13,7 @@ import {
   encontrarColuna,
   normalizar,
   parsearData,
+  parsearHoraInicio,
   parsearHoras,
   parsearKm,
   parsearValor,
@@ -147,7 +148,8 @@ export function parsear99(
       }
     }
 
-    const km_rodados = parsearKm(colKm ? row[colKm] : undefined)
+    const km_rodados  = parsearKm(colKm ? row[colKm] : undefined)
+    const hora_inicio = parsearHoraInicio(row[colData] ?? '')
 
     registros.push({
       data,
@@ -157,6 +159,7 @@ export function parsear99(
       valor_liquido,
       horas_trabalhadas,
       km_rodados,
+      hora_inicio,
       _linhaOriginal: i + 2,
     })
   }

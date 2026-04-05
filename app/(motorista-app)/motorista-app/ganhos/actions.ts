@@ -15,6 +15,7 @@ export async function registrarGanho(
 
   const plataforma = formData.get('plataforma') as string
   const data       = formData.get('data')       as string
+  const turno      = formData.get('turno')      as string | null
   const brutaStr   = formData.get('valor_bruto') as string
   const liqStr     = formData.get('valor_liquido') as string
   const horasStr   = formData.get('horas_trabalhadas') as string
@@ -33,6 +34,7 @@ export async function registrarGanho(
     motorista_id: user.id,
     plataforma,
     data,
+    turno: turno || 'nao_informado',
     valor_bruto,
     valor_liquido,
     horas_trabalhadas,
