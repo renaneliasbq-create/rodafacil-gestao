@@ -23,7 +23,7 @@ function SubmitCadastro() {
   const { pending } = useFormStatus()
   return (
     <button type="submit" disabled={pending} className="w-full py-3 mt-2 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-xl flex items-center justify-center gap-2 transition-colors min-h-[44px]">
-      {pending ? <><Loader2 className="w-4 h-4 animate-spin" />Criando conta...</> : <><UserPlus className="w-4 h-4" />Criar minha conta</>}
+      {pending ? <><Loader2 className="w-4 h-4 animate-spin" />Criando conta...</> : <><UserPlus className="w-4 h-4" />Começar grátis por 60 dias</>}
     </button>
   )
 }
@@ -111,6 +111,10 @@ function FormCadastro() {
   return (
     <form action={formAction} className="space-y-4">
       {state?.error && <Erro msg={state.error} />}
+      <div className="bg-emerald-50 border border-emerald-100 rounded-xl px-4 py-3 flex items-center gap-2">
+        <span className="text-emerald-600 text-lg">🎁</span>
+        <p className="text-sm text-emerald-700 font-medium">60 dias grátis, sem cartão de crédito</p>
+      </div>
       <div>
         <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">Nome completo</label>
         <input name="nome" type="text" required autoComplete="name" placeholder="Seu nome" className="input" />
@@ -134,7 +138,7 @@ function FormCadastroGestor() {
       {state?.error && <Erro msg={state.error} />}
       <div className="bg-blue-50 border border-blue-100 rounded-xl px-4 py-3 flex items-center gap-2">
         <span className="text-blue-600 text-lg">🎁</span>
-        <p className="text-sm text-blue-700 font-medium">30 dias grátis, sem cartão de crédito</p>
+        <p className="text-sm text-blue-700 font-medium">60 dias grátis, sem cartão de crédito</p>
       </div>
       <div>
         <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">Nome completo</label>
@@ -148,7 +152,7 @@ function FormCadastroGestor() {
       <SenhaInput name="confirm" label="Confirmar senha" />
       <button type="submit" className="btn-primary w-full py-3 mt-2">
         <UserPlus className="w-4 h-4" />
-        Começar grátis por 30 dias
+        Começar grátis por 60 dias
       </button>
     </form>
   )

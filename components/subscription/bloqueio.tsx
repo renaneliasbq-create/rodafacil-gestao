@@ -21,7 +21,7 @@ export function BloqueioAssinatura({ info, perfil }: Props) {
             </div>
             <h1 className="text-xl font-extrabold text-white">Seu trial encerrou</h1>
             <p className="text-blue-200 text-sm mt-1">
-              Seus 30 dias gratuitos terminaram. Escolha um plano para continuar.
+              Seus 60 dias gratuitos terminaram. Escolha um plano para continuar.
             </p>
           </div>
           <div className="px-8 py-6 space-y-4">

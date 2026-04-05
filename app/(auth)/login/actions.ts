@@ -45,9 +45,9 @@ export async function signUpGestor(
     tipo:  'gestor',
   })
 
-  // Cria trial de 30 dias automaticamente
+  // Cria trial de 60 dias automaticamente
   const trialEnd = new Date()
-  trialEnd.setDate(trialEnd.getDate() + 30)
+  trialEnd.setDate(trialEnd.getDate() + 60)
 
   await supabase.from('assinaturas').insert({
     user_id:           authData.user.id,
@@ -99,6 +99,20 @@ export async function signUpMotoApp(
     nome,
     email,
     tipo:  'motorista_app',
+  })
+
+  // Cria trial de 60 dias automaticamente
+  const trialEnd = new Date()
+  trialEnd.setDate(trialEnd.getDate() + 60)
+
+  await supabase.from('assinaturas').insert({
+    user_id:            authData.user.id,
+    plano:              'motorista_pro',
+    perfil:             'motorista',
+    periodo:            'mensal',
+    preco_centavos:     1990,
+    status:             'trial',
+    current_period_end: trialEnd.toISOString().split('T')[0],
   })
 
   redirect('/motorista-app')

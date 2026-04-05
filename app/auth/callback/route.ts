@@ -37,10 +37,11 @@ export async function GET(request: Request) {
             tipo,
           })
 
-          // Cria trial de 30 dias para gestores
+          // Cria trial de 60 dias para todos os novos usuários via OAuth
+          const trialEnd = new Date()
+          trialEnd.setDate(trialEnd.getDate() + 60)
+
           if (tipo === 'gestor') {
-            const trialEnd = new Date()
-            trialEnd.setDate(trialEnd.getDate() + 30)
             await supabase.from('assinaturas').insert({
               user_id:            user.id,
               plano:              'gestor_starter',
@@ -53,6 +54,16 @@ export async function GET(request: Request) {
             return NextResponse.redirect(`${origin}/gestor`)
           }
 
+          // motorista_app
+          await supabase.from('assinaturas').insert({
+            user_id:            user.id,
+            plano:              'motorista_pro',
+            perfil:             'motorista',
+            periodo:            'mensal',
+            preco_centavos:     1990,
+            status:             'trial',
+            current_period_end: trialEnd.toISOString().split('T')[0],
+          })
           return NextResponse.redirect(`${origin}/motorista-app`)
         }
 
