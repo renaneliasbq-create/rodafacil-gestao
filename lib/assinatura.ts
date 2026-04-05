@@ -77,7 +77,7 @@ export function getLimiteVeiculos(info: AssinaturaInfo): number | null {
 /** Retorna true se o acesso deve ser liberado */
 export function temAcessoAtivo(info: AssinaturaInfo): boolean {
   if (['ativa', 'override'].includes(info.status)) return true
-  // Trial ativo — verifica se ainda está dentro dos 30 dias
+  // Trial ativo — verifica se ainda está dentro dos 60 dias
   if (info.status === 'trial') {
     if (!info.current_period_end) return true // trial sem data = acesso manual
     return new Date(info.current_period_end) > new Date()

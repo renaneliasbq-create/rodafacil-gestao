@@ -59,7 +59,8 @@ export async function middleware(request: NextRequest) {
     .from('users').select('tipo').eq('id', user.id).single()
 
   if (pathname.startsWith('/gestor') && profile?.tipo !== 'gestor') {
-    return NextResponse.redirect(new URL('/motorista', request.url))
+    const dest = profile?.tipo === 'motorista_app' ? '/motorista-app' : '/login'
+    return NextResponse.redirect(new URL(dest, request.url))
   }
 
   if (pathname.startsWith('/motorista-app') && profile?.tipo !== 'motorista_app') {

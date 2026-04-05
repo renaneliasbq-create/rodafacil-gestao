@@ -28,6 +28,15 @@ function SubmitCadastro() {
   )
 }
 
+function SubmitCadastroGestor() {
+  const { pending } = useFormStatus()
+  return (
+    <button type="submit" disabled={pending} className="btn-primary w-full py-3 mt-2 flex items-center justify-center gap-2 min-h-[44px]">
+      {pending ? <><Loader2 className="w-4 h-4 animate-spin" />Criando conta...</> : <><UserPlus className="w-4 h-4" />Começar grátis por 60 dias</>}
+    </button>
+  )
+}
+
 // ─── Campo de senha com toggle ───────────────────────────────
 function SenhaInput({ name, placeholder = '••••••••', label }: { name: string; placeholder?: string; label: string }) {
   const [show, setShow] = useState(false)
@@ -150,10 +159,7 @@ function FormCadastroGestor() {
       </div>
       <SenhaInput name="password" label="Senha" placeholder="Mínimo 6 caracteres" />
       <SenhaInput name="confirm" label="Confirmar senha" />
-      <button type="submit" className="btn-primary w-full py-3 mt-2">
-        <UserPlus className="w-4 h-4" />
-        Começar grátis por 60 dias
-      </button>
+      <SubmitCadastroGestor />
     </form>
   )
 }

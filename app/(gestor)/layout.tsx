@@ -16,7 +16,9 @@ export default async function GestorLayout({ children }: { children: React.React
     .eq('id', user.id)
     .single()
 
-  if (profile?.tipo !== 'gestor') redirect('/motorista')
+  if (profile?.tipo !== 'gestor') {
+    redirect(profile?.tipo === 'motorista_app' ? '/motorista-app' : '/login')
+  }
 
   // Verifica assinatura
   const assinaturaInfo = await getAssinaturaStatus(user.id)
